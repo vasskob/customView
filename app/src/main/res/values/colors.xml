@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="colorPointer">#D32F2F</color>
+    <color name="colorBorder">#F5F5F5</color>
+    <color name="colorBackground">#212121</color>
+    <color name="colorDigits">#FAFAFA</color>
+    <color name="colorSectorBefore">#29B6F6</color>
+    <color name="colorSectorAfter">#0288D1</color>
+
+</resources>
