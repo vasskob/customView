@@ -10,6 +10,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="@color/colorPrimary"
     tools:context="com.example.vasskob.customview.MainActivity">
 
     <com.example.vasskob.customview.SpeedometerView
@@ -19,7 +20,6 @@
         android:contentDescription="@string/description"
         custom:backgroundColor="@color/colorBackground"
         custom:borderColor="@color/colorBorder"
-
         custom:currentSpeed="0"
         custom:digitsColor="@color/colorDigits"
         custom:innerSectorRadius="2"

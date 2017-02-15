@@ -7,6 +7,8 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
+    private SpeedometerView speedometer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,5 +34,6 @@ public class MainActivity extends AppCompatActivity {
                 speedometerView.onSpeedChanged(speedometerView.getCurrentSpeed() - 8);
             }
         }));
-    }
+        speedometer = (SpeedometerView)findViewById(R.id.speedometer_view);
+        speedometerView.setCurrentSpeed(50,1000,300);    }
 }
