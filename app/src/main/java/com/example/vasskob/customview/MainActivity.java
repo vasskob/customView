@@ -34,10 +34,9 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        speedometerView.brakeRelease();
+                        speedometerView.acceleratorRelease();
                     }
                 }
-
         ));
         Button brakeButton = (Button) findViewById(R.id.button_brake);
         brakeButton.setOnTouchListener(new RepeatListener(0, 0,
@@ -50,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-//                        speedometerView.acceleratorPressed();
+                        speedometerView.brakeRelease();
                     }
                 }
         ));
