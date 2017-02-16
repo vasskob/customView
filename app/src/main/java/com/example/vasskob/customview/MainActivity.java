@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
         Button accelerateButton = (Button) findViewById(R.id.button_accelerate);
-        accelerateButton.setOnTouchListener(new RepeatListener(100, 0, new View.OnClickListener() {
+        accelerateButton.setOnTouchListener(new RepeatListener(0, 0, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 speedometerView.setCurrentSpeed(speedometerView.getCurrentSpeed() + 0.8f, 0, 0);
@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         brakeButton.setOnTouchListener(new RepeatListener(0, 0, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                speedometerView.setCurrentSpeed(speedometerView.getCurrentSpeed() - 3f, 0, 0);
+                speedometerView.setCurrentSpeed(speedometerView.getCurrentSpeed() - 0.8f, 0, 0);
             }
         }));
 

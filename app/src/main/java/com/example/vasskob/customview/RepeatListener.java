@@ -16,7 +16,7 @@ import android.view.View.OnTouchListener;
  * If it runs slow, it does not generate skipped onClicks. Can be rewritten to
  * achieve this.
  */
-public class RepeatListener implements OnTouchListener {
+class RepeatListener implements OnTouchListener {
 
     private Handler handler = new Handler();
 
@@ -42,8 +42,8 @@ public class RepeatListener implements OnTouchListener {
      * @param clickListener   The OnClickListener, that will be called
      *                        periodically
      */
-    public RepeatListener(int initialInterval, int normalInterval,
-                          OnClickListener clickListener) {
+    RepeatListener(int initialInterval, int normalInterval,
+                   OnClickListener clickListener) {
         if (clickListener == null)
             throw new IllegalArgumentException("null runnable");
         if (initialInterval < 0 || normalInterval < 0)

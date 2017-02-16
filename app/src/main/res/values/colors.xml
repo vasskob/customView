@@ -8,7 +8,7 @@
     <color name="colorBorder">#F5F5F5</color>
     <color name="colorBackground">#212121</color>
     <color name="colorDigits">#FAFAFA</color>
-    <color name="colorSectorBefore">#29B6F6</color>
-    <color name="colorSectorAfter">#0288D1</color>
+    <color name="colorSectorBefore">#4FC3F7</color>
+    <color name="colorSectorAfter">#0277BD</color>
 
 </resources>

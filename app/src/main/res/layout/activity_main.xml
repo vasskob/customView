@@ -24,7 +24,7 @@
         custom:digitsColor="@color/colorDigits"
         custom:innerSectorRadius="200"
         custom:maxSpeed="100"
-        custom:outerSectorRadius="250"
+        custom:outerSectorRadius="300"
         custom:pointerColor="@color/colorPointer"
         custom:pointerRadius="350"
         custom:sectorAfterPointerColor="@color/colorSectorAfter"
