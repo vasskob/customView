@@ -22,11 +22,11 @@
         custom:borderColor="@color/colorBorder"
         custom:currentSpeed="0"
         custom:digitsColor="@color/colorDigits"
-        custom:innerSectorRadius="2"
+        custom:innerSectorRadius="200"
         custom:maxSpeed="100"
-        custom:outerSectorRadius="4"
+        custom:outerSectorRadius="250"
         custom:pointerColor="@color/colorPointer"
-        custom:pointerRadius="5"
+        custom:pointerRadius="350"
         custom:sectorAfterPointerColor="@color/colorSectorAfter"
         custom:sectorBeforePointerColor="@color/colorSectorBefore"/>
 

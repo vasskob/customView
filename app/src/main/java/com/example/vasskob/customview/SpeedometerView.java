@@ -11,7 +11,7 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class SpeedometerView extends View implements SpeedChangeListener {
+public class SpeedometerView extends View {
 
     private static final float SCALE_SIZE = 7000f;
 
@@ -41,7 +41,7 @@ public class SpeedometerView extends View implements SpeedChangeListener {
     private float angle;
 
 
-    private Path onPath;
+    private Path animSectorPath;
     private Path borderPath;
     private RectF oval;
     private RectF ovalDigits;
@@ -79,7 +79,7 @@ public class SpeedometerView extends View implements SpeedChangeListener {
     }
 
     public void accelerate() {
-        setCurrentSpeed(33,1000,300);
+        setCurrentSpeed(33, 1000, 300);
 
     }
 
@@ -107,18 +107,20 @@ public class SpeedometerView extends View implements SpeedChangeListener {
         digitsPaint.setColor(digitsColor);
         digitsPaint.setStyle(Paint.Style.FILL);
         digitsPaint.setStrokeWidth(2f);
-        digitsPaint.setTextSize(SCALE_SIZE/getMaxSpeed());
+        digitsPaint.setTextSize(SCALE_SIZE / getMaxSpeed());
         digitsPaint.setShadowLayer(5f, 0f, 0f, digitsColor);
         digitsPaint.setAntiAlias(true);
 
 
         sectorBeforePointerPaint = new Paint();
         sectorBeforePointerPaint.setColor(sectorBeforePointerColor);
+        sectorBeforePointerPaint.setStyle(Paint.Style.STROKE);
 
         sectorAfterPointerPaint = new Paint();
         sectorAfterPointerPaint.setColor(sectorAfterPointerColor);
+        sectorAfterPointerPaint.setStyle(Paint.Style.STROKE);
 
-        onPath = new Path();
+        animSectorPath = new Path();
         borderPath = new Path();
     }
 
@@ -158,19 +160,26 @@ public class SpeedometerView extends View implements SpeedChangeListener {
         drawPointer(canvas);
         drawBorder(canvas);
         drawDigits(canvas);
-//        drawSectorBeforePointer(canvas);
+        drawSectorBeforePointer(canvas);
 //        drawSectorAfterPointer(canvas);
+    }
+
+    private void drawSectorBeforePointer(Canvas canvas) {
+
+        animSectorPath.reset();
+
+        borderPath.addCircle(centerX, centerY, getOuterSectorRadius(), Path.Direction.CW);
+        canvas.drawPath(animSectorPath, sectorBeforePointerPaint);
     }
 
     private void drawDigits(Canvas canvas) {
 
-
         canvas.save(Canvas.MATRIX_SAVE_FLAG);
-        canvas.rotate(-195, centerX, centerY);
+        canvas.rotate(-185, centerX, centerY);
         Path circle = new Path();
         double halfCircumference = (canvas.getWidth() / 2 - canvas.getWidth() / 8) * Math.PI;
         double increments = 10;
-        for (int i = 10; i <= this.maxSpeed; i += increments) {
+        for (int i = 10; i < this.maxSpeed; i += increments) {
             circle.addCircle(centerX, centerY, (canvas.getWidth() / 2 - canvas.getWidth() / 8), Path.Direction.CW);
             canvas.drawTextOnPath(String.format("%d", i),
                     circle,
@@ -182,19 +191,18 @@ public class SpeedometerView extends View implements SpeedChangeListener {
         canvas.restore();
         System.out.println("Width of Canvas is  " + canvas.getWidth());
 
-
     }
 
     private void drawBorder(Canvas canvas) {
         RectF ovalBorder = getOval(canvas, 0.95f);
         borderPath.reset();
-        for (int i = -170; i < 0; i += 170 * 10 / maxSpeed) {
+        int step = 180 * 10 / maxSpeed;
+        for (int i = -180 + step; i < 0; i += step) {
+
             borderPath.addArc(ovalBorder, i, 1.5f);
         }
-        //borderPath.addOval(0,0,180,180, Path.Direction.CW);
         borderPath.addCircle(centerX, centerY, canvas.getWidth() / 2 - 10, Path.Direction.CW);
         canvas.drawPath(borderPath, borderPaint);
-
 
     }
 
@@ -202,7 +210,9 @@ public class SpeedometerView extends View implements SpeedChangeListener {
 
         //RectF oval = getOval(canvas, 1);
         float radius = oval.width() * 0.35f + 10;
+        System.out.println("!!!!!!!!!! "+ radius);
         RectF smallOval = getOval(canvas, 0.1f);
+
 
         angle = 5 + getCurrentSpeed() / getMaxSpeed() * 160;
         canvas.drawLine(
@@ -406,18 +416,20 @@ public class SpeedometerView extends View implements SpeedChangeListener {
 
     public void setCurrentSpeed(float currentSpeed) {
 
-            if (currentSpeed < 0)
-                throw new IllegalArgumentException("Non-positive value specified as a speed.");
-            if (currentSpeed > maxSpeed)
-                currentSpeed = maxSpeed;
-            this.currentSpeed = currentSpeed;
-            invalidate();
+        if (currentSpeed < 0)
+            throw new IllegalArgumentException("Non-positive value specified as a speed.");
+        if (currentSpeed > maxSpeed)
+            currentSpeed = maxSpeed;
+        this.currentSpeed = currentSpeed;
+        invalidate();
 
     }
 
     public ValueAnimator setCurrentSpeed(float progress, long duration, long startDelay) {
         if (progress < 0)
-            throw new IllegalArgumentException("Negative value specified as a speed.");
+            progress=0;
+            //
+        // throw new IllegalArgumentException("Negative value specified as a speed.");
 
         if (progress > maxSpeed)
             progress = maxSpeed;
@@ -445,10 +457,4 @@ public class SpeedometerView extends View implements SpeedChangeListener {
     }
 
 
-    @Override
-    public void onSpeedChanged(float newSpeedValue) {
-        this.setCurrentSpeed(33,1000,300);
-        this.invalidate();
-
-    }
 }
