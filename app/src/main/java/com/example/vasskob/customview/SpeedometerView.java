@@ -118,44 +118,60 @@ public class SpeedometerView extends View {
         sectorBeforePointerPaint = new Paint();
         sectorBeforePointerPaint.setColor(sectorBeforePointerColor);
         sectorBeforePointerPaint.setStyle(Paint.Style.STROKE);
-        sectorBeforePointerPaint.setStrokeWidth(getOuterSectorRadius() - getInnerSectorRadius());
+        sectorBeforePointerPaint.setStrokeWidth(outerSectorRadius - innerSectorRadius);
 
         sectorAfterPointerPaint = new Paint();
         sectorAfterPointerPaint.setColor(sectorAfterPointerColor);
         sectorAfterPointerPaint.setStyle(Paint.Style.STROKE);
-        sectorAfterPointerPaint.setStrokeWidth(getOuterSectorRadius() - getInnerSectorRadius());
+        sectorAfterPointerPaint.setStrokeWidth(outerSectorRadius - innerSectorRadius);
 
         borderPath = new Path();
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+//    @Override
+//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+//        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+//        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+//
+//        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+//        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+//
+//        int chosenWidth = chooseDimension(widthMode, widthSize);
+//        int chosenHeight = chooseDimension(heightMode, heightSize);
+//
+//        int chosenDimension = Math.min(chosenWidth, chosenHeight);
+//        centerX = chosenDimension / 2;
+//        centerY = chosenDimension / 2;
+//        setMeasuredDimension(chosenDimension, chosenDimension);
+//    }
+//
+//    private int chooseDimension(int widthMode, int widthSize) {
+//        if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.EXACTLY) {
+//            return widthSize;
+//        } else {
+//            return getPreferredSize();
+//        }
+//
+//    }
+//
+//    private int getPreferredSize() {
+//        return 250;
+//    }
 
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-
-        int chosenWidth = chooseDimension(widthMode, widthSize);
-        int chosenHeight = chooseDimension(heightMode, heightSize);
-
-        int chosenDimension = Math.min(chosenWidth, chosenHeight);
-        centerX = chosenDimension / 2;
-        centerY = chosenDimension / 2;
-        setMeasuredDimension(chosenDimension, chosenDimension);
+    public void acceleratorPressed() {
+        setCurrentSpeed(getCurrentSpeed() + 0.8f, 0, 0);
     }
 
-    private int chooseDimension(int widthMode, int widthSize) {
-        if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.EXACTLY) {
-            return widthSize;
-        } else {
-            return getPreferredSize();
-        }
-
+    public void acceleratorRelease() {
+        setCurrentSpeed(getCurrentSpeed() - 0.8f, 0, 0);
     }
 
-    private int getPreferredSize() {
-        return 500;
+    public void brakePressed() {
+        setCurrentSpeed(getCurrentSpeed() - 0.8f, 0, 0);
+    }
+
+    public void brakeRelease() {
+        setCurrentSpeed(getCurrentSpeed() - 0.2f, 0, 0);
     }
 
     @Override
@@ -173,7 +189,7 @@ public class SpeedometerView extends View {
 //        sectorAfterPointerPath.addCircle(centerX, centerY, (getOuterSectorRadius()-getInnerSectorRadius())*5, Path.Direction.CW);
 //        canvas.drawPath(sectorAfterPointerPath, sectorAfterPointerPaint);
 
-        RectF rect = getOval(canvas, 0.4f);
+        RectF rect = getOval(canvas,outerSectorRadius/oval.height() );
         canvas.drawArc(rect, angle, -HALF_CIRCLE_DEGREES, false, sectorAfterPointerPaint);
     }
 
@@ -182,7 +198,7 @@ public class SpeedometerView extends View {
 //      sectorBeforePointerPath.addCircle(centerX, centerY, getOuterSectorRadius(), Path.Direction.CW);
 //      canvas.drawPath(sectorBeforePointerPath, sectorBeforePointerPaint);
 
-        RectF rect = getOval(canvas, 0.4f);
+        RectF rect = getOval(canvas, outerSectorRadius/oval.height());
         canvas.drawArc(rect, -HALF_CIRCLE_DEGREES, angle, false, sectorBeforePointerPaint);
     }
 
@@ -194,11 +210,11 @@ public class SpeedometerView extends View {
         Path circle = new Path();
         double halfCircumference = (canvas.getHeight() - canvas.getHeight() / 4) * Math.PI;
         int increments = MAX_SPEED_DIVISIBLE_BY;
-        for (int i = MAX_SPEED_DIVISIBLE_BY; i < this.maxSpeed; i += increments) {
+        for (int i = increments; i < maxSpeed; i += increments) {
             circle.addCircle(centerX, centerY, (canvas.getHeight() - canvas.getHeight() / 4), Path.Direction.CW);
             canvas.drawTextOnPath(String.format("%d", i),
                     circle,
-                    (float) (i * halfCircumference / this.maxSpeed),
+                    (float) (i * halfCircumference / maxSpeed),
                     -10f,
                     digitsPaint);
         }
@@ -223,7 +239,7 @@ public class SpeedometerView extends View {
 
     private void drawPointer(Canvas canvas) {
 
-        float radius = oval.width() * 0.35f;
+        float radius = pointerRadius * 1.4f;
         RectF smallOval = getOval(canvas, 0.1f);
         angle = getCurrentSpeed() / getMaxSpeed() * HALF_CIRCLE_DEGREES;
         canvas.drawLine(
