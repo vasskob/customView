@@ -24,21 +24,36 @@ public class MainActivity extends AppCompatActivity {
         Button accelerateButton = (Button) findViewById(R.id.button_accelerate);
 //      accelerateButton.setOnTouchListener(this);
 
-        accelerateButton.setOnTouchListener(new RepeatListener(0, 0, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                speedometerView.acceleratorPressed();
-            }
+        accelerateButton.setOnTouchListener(new RepeatListener(0, 0,
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        speedometerView.acceleratorPressed();
+                    }
+                },
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        speedometerView.brakeRelease();
+                    }
+                }
 
-        }));
+        ));
         Button brakeButton = (Button) findViewById(R.id.button_brake);
-
-        brakeButton.setOnTouchListener(new RepeatListener(0, 0, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                speedometerView.brakePressed();
-            }
-        }));
+        brakeButton.setOnTouchListener(new RepeatListener(0, 0,
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        speedometerView.brakePressed();
+                    }
+                },
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+//                        speedometerView.acceleratorPressed();
+                    }
+                }
+        ));
 
     }
 //    brakeButton.setOnTouchListener(this);
