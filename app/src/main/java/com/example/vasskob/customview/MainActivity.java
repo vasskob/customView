@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
-        Button accelerateButton = (Button) findViewById(R.id.button_accelerate);
+        ImageButton accelerateButton = (ImageButton) findViewById(R.id.button_accelerate);
         accelerateButton.setOnTouchListener(new RepeatListener(0, 0,
                 new View.OnClickListener() {
                     @Override
@@ -35,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         ));
-        Button brakeButton = (Button) findViewById(R.id.button_brake);
+        ImageButton brakeButton = (ImageButton) findViewById(R.id.button_brake);
         brakeButton.setOnTouchListener(new RepeatListener(0, 0,
                 new View.OnClickListener() {
                     @Override

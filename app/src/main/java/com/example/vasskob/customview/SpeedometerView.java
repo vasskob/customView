@@ -9,27 +9,29 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 
 public class SpeedometerView extends View {
 
-    private static final String POINTER_RADIUS_WARN = "Pointer radius must be > 0";
-    private static final String INNER_SECTOR_RADIUS_WARN = "Inner radius must be > 0 than outer radius.";
-    private static final String OUTER_SECTOR_RADIUS_WARN = "Outer radius must be > than inner radius.";
-    private static final String MAX_SPEED_WARN = "Max speed must be > 60 & divisible by 10";
-    private static final String NEGATIVE_SPEED = "Non-positive value specified as a speed.";
+    private static final String POINTER_RADIUS_WARN = "Pointer radius must be in range [0,100]";
+    private static final String INNER_SECTOR_RADIUS_WARN = "Inner radius must be in range [0,99] &  < than outer radius.";
+    private static final String OUTER_SECTOR_RADIUS_WARN = "Outer radius must be in range [1,100] & > than inner radius.";
+    private static final String MAX_SPEED_WARN = "Max speed must be > than 60 & divisible by 10";
+    private static final String NEGATIVE_SPEED_WARN = "Non-positive value specified as a speed.";
 
     private static final double MATH_PI = Math.PI;
-    private static final int MIN_VALUE_OF_MAX_SPEED = 60;
     private static final int MAX_SPEED_DIVISIBLE_BY = 10;
+    private static final int MIN_VALUE_OF_MAX_SPEED = 60;
+    private static final int MAX_VALUE_OF_RADIUS = 100;
     private static final int HALF_CIRCLE_DEGREES = 180;
+    private static final int MAX_VALUE_OF_MAX_SPEED = 400;
+    private static final float SCALE_WIDTH = 1.5f;
+    private static final float DIGITS_WIDTH = 2f;
     private static final float SCALE_SIZE = 5f;
     private static final float BORDER_WIDTH = 15f;
-    private static final float POINTER_WIDTH = 20f;
-    private static final float DIGITS_WIDTH = 2f;
-    private static final float SCALE_WIDTH = 1.5f;
+    private static final float POSITIVE_ACCELERATION = 0.4f;
+    private static final float NEGATIVE_ACCELERATION = -0.8f;
+    private static final float IDLING_ACCELERATION = -0.02f;
 
     private int spBackgroundColor;
     private int digitsColor;
@@ -55,9 +57,6 @@ public class SpeedometerView extends View {
     private float angle;
     private float currentSpeed;
 
-    int viewWidth;
-    int viewHeight;
-
     private Path borderPath;
     private RectF oval;
 
@@ -72,8 +71,6 @@ public class SpeedometerView extends View {
                 attrs, R.styleable.SpeedometerView, 0, 0);
         try {
 
-//            viewWidth = Integer.parseInt(attrs.getAttributeValue("android", "layout_width"));
-//            viewHeight = Integer.parseInt(attrs.getAttributeValue("android", "layout_height"));
             pointerRadius = a.getInteger(R.styleable.SpeedometerView_pointerRadius, 0);
             setPointerRadius(pointerRadius);
             innerSectorRadius = a.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 0);
@@ -100,7 +97,6 @@ public class SpeedometerView extends View {
     private void init() {
         pointerPaint = new Paint();
         pointerPaint.setColor(pointerColor);
-        pointerPaint.setStrokeWidth(POINTER_WIDTH);
 
         borderPaint = new Paint();
         borderPaint.setColor(borderColor);
@@ -117,19 +113,16 @@ public class SpeedometerView extends View {
         digitsPaint.setColor(digitsColor);
         digitsPaint.setStyle(Paint.Style.FILL);
         digitsPaint.setStrokeWidth(DIGITS_WIDTH);
-        //  digitsPaint.setTextSize(SCALE_SIZE / getMaxSpeed());
         digitsPaint.setShadowLayer(5f, 0f, 0f, digitsColor);
         digitsPaint.setAntiAlias(true);
 
         sectorBeforePointerPaint = new Paint();
         sectorBeforePointerPaint.setColor(sectorBeforePointerColor);
         sectorBeforePointerPaint.setStyle(Paint.Style.STROKE);
-        sectorBeforePointerPaint.setStrokeWidth(outerSectorRadius - innerSectorRadius);
 
         sectorAfterPointerPaint = new Paint();
         sectorAfterPointerPaint.setColor(sectorAfterPointerColor);
         sectorAfterPointerPaint.setStyle(Paint.Style.STROKE);
-        sectorAfterPointerPaint.setStrokeWidth(outerSectorRadius - innerSectorRadius);
 
         borderPath = new Path();
     }
@@ -167,19 +160,19 @@ public class SpeedometerView extends View {
 
 
     public void acceleratorPressed() {
-        setCurrentSpeed(getCurrentSpeed() + 0.4f, 0, 0);
+        setCurrentSpeed(currentSpeed + POSITIVE_ACCELERATION, 0, 0);
     }
 
     public void acceleratorReleased() {
-        setCurrentSpeed(getCurrentSpeed() - 0.02f, 0, 0);
+        setCurrentSpeed(currentSpeed + IDLING_ACCELERATION, 0, 0);
     }
 
     public void brakePressed() {
-        setCurrentSpeed(getCurrentSpeed() - 0.8f, 0, 0);
+        setCurrentSpeed(currentSpeed + NEGATIVE_ACCELERATION, 0, 0);
     }
 
     public void brakeReleased() {
-        setCurrentSpeed(getCurrentSpeed() - 0.02f, 0, 0);
+        setCurrentSpeed(currentSpeed + IDLING_ACCELERATION, 0, 0);
     }
 
     @Override
@@ -193,12 +186,14 @@ public class SpeedometerView extends View {
     }
 
     private synchronized void drawSectorAfterPointer(Canvas canvas) {
-        RectF rect = getOval(canvas, outerSectorRadius / oval.width());
+        sectorAfterPointerPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
+        RectF rect = getOval(canvas, outerSectorRadius / (1f*MAX_VALUE_OF_RADIUS));
         canvas.drawArc(rect, angle, -HALF_CIRCLE_DEGREES, false, sectorAfterPointerPaint);
     }
 
     private synchronized void drawSectorBeforePointer(Canvas canvas) {
-        RectF rect = getOval(canvas, outerSectorRadius / oval.width());
+        sectorBeforePointerPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
+        RectF rect = getOval(canvas, outerSectorRadius / (1f*MAX_VALUE_OF_RADIUS));
         canvas.drawArc(rect, -HALF_CIRCLE_DEGREES, angle, false, sectorBeforePointerPaint);
     }
 
@@ -208,7 +203,7 @@ public class SpeedometerView extends View {
         canvas.rotate(-(HALF_CIRCLE_DEGREES + 400 / getMaxSpeed()), centerX, centerY);
 
         Path circle = new Path();
-        double halfCircumference = (oval.width() / 2 - oval.width() / 8) * Math.PI;
+        double halfCircumference = (oval.width() / 2 - oval.width() / 8) * MATH_PI;
         int increments = MAX_SPEED_DIVISIBLE_BY;
         for (int i = increments; i < maxSpeed; i += increments) {
             circle.addCircle(centerX, centerY, (oval.width() / 2 - oval.width() / 8), Path.Direction.CW);
@@ -239,9 +234,10 @@ public class SpeedometerView extends View {
 
     private void drawPointer(Canvas canvas) {
 
-        float radius = pointerRadius * 0.7f;
+        pointerPaint.setStrokeWidth(oval.width() / 65f);
+        float radius = pointerRadius * oval.width() / (2f*MAX_VALUE_OF_RADIUS);
         RectF smallOval = getOval(canvas, 0.1f);
-        angle = getCurrentSpeed() / getMaxSpeed() * HALF_CIRCLE_DEGREES;
+        angle = currentSpeed / maxSpeed * HALF_CIRCLE_DEGREES;
         canvas.drawLine(
                 (float) (centerX + Math.cos((HALF_CIRCLE_DEGREES - angle) / HALF_CIRCLE_DEGREES * MATH_PI) * smallOval.width() * 0.5f),
                 (float) (centerY - Math.sin(angle / HALF_CIRCLE_DEGREES * MATH_PI) * smallOval.width() * 0.5f),
@@ -288,7 +284,7 @@ public class SpeedometerView extends View {
     }
 
     public void setPointerRadius(int pointerRadius) {
-        if (pointerRadius < 0)
+        if (pointerRadius < 0 || pointerRadius > MAX_VALUE_OF_RADIUS)
             throw new IllegalArgumentException(POINTER_RADIUS_WARN);
         this.pointerRadius = pointerRadius;
         invalidate();
@@ -299,7 +295,7 @@ public class SpeedometerView extends View {
     }
 
     public void setInnerSectorRadius(int innerSectorRadius) {
-        if (innerSectorRadius < 0)
+        if (innerSectorRadius < 0 || innerSectorRadius > MAX_VALUE_OF_RADIUS - 1)
             throw new IllegalArgumentException(INNER_SECTOR_RADIUS_WARN);
         this.innerSectorRadius = innerSectorRadius;
         invalidate();
@@ -312,7 +308,7 @@ public class SpeedometerView extends View {
 
     public void setOuterSectorRadius(int outerSectorRadius) {
 
-        if (outerSectorRadius < getInnerSectorRadius())
+        if (outerSectorRadius < innerSectorRadius || outerSectorRadius > MAX_VALUE_OF_RADIUS)
             throw new IllegalArgumentException(OUTER_SECTOR_RADIUS_WARN);
         this.outerSectorRadius = outerSectorRadius;
         invalidate();
@@ -323,7 +319,7 @@ public class SpeedometerView extends View {
     }
 
     public void setMaxSpeed(int maxSpeed) {
-        if (maxSpeed < MIN_VALUE_OF_MAX_SPEED || (maxSpeed % MAX_SPEED_DIVISIBLE_BY) != 0)
+        if (maxSpeed < MIN_VALUE_OF_MAX_SPEED || (maxSpeed % MAX_SPEED_DIVISIBLE_BY) != 0 || maxSpeed > MAX_VALUE_OF_MAX_SPEED)
             throw new IllegalArgumentException(MAX_SPEED_WARN);
         this.maxSpeed = maxSpeed;
         invalidate();
@@ -390,7 +386,7 @@ public class SpeedometerView extends View {
     public void setCurrentSpeed(float currentSpeed) {
 
         if (currentSpeed < 0)
-            throw new IllegalArgumentException(NEGATIVE_SPEED);
+            throw new IllegalArgumentException(NEGATIVE_SPEED_WARN);
         if (currentSpeed > maxSpeed)
             currentSpeed = maxSpeed;
         this.currentSpeed = currentSpeed;
@@ -427,18 +423,5 @@ public class SpeedometerView extends View {
         va.start();
         return va;
     }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        return super.onTouchEvent(event);
-    }
-
-    class mListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onDown(MotionEvent e) {
-            return true;
-        }
-    }
-
 
 }
