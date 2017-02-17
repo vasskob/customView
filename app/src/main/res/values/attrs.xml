@@ -7,9 +7,9 @@
         <attr name="sectorAfterPointerColor" format="color"/>
         <attr name="pointerColor" format="color"/>
         <attr name="borderColor" format="color"/>
-        <attr name="pointerRadius" format="float"/>
-        <attr name="innerSectorRadius" format="float"/>
-        <attr name="outerSectorRadius" format="float"/>
+        <attr name="pointerRadius" format="integer"/>
+        <attr name="innerSectorRadius" format="integer"/>
+        <attr name="outerSectorRadius" format="integer"/>
         <attr name="maxSpeed" format="integer"/>
         <attr name="currentSpeed" format="float"/>
     </declare-styleable>

@@ -16,19 +16,20 @@
     <com.example.vasskob.customview.SpeedometerView
         android:id="@+id/speedometer_view"
         android:layout_width="wrap_content"
-        android:layout_height="200dp"
+        android:layout_height="50dp"
         android:contentDescription="@string/description"
         custom:backgroundColor="@color/colorBackground"
         custom:borderColor="@color/colorBorder"
+        custom:maxSpeed="100"
         custom:currentSpeed="0"
         custom:digitsColor="@color/colorDigits"
-        custom:innerSectorRadius="450"
-        custom:maxSpeed="100"
-        custom:outerSectorRadius="550"
+        custom:innerSectorRadius="350"
+        custom:outerSectorRadius="450"
+        custom:pointerRadius="650"
         custom:pointerColor="@color/colorPointer"
-        custom:pointerRadius="350"
         custom:sectorAfterPointerColor="@color/colorSectorAfter"
-        custom:sectorBeforePointerColor="@color/colorSectorBefore"/>
+        custom:sectorBeforePointerColor="@color/colorSectorBefore"
+        android:layout_alignParentTop="true"/>
 
     <Button
         android:id="@+id/button_accelerate"

@@ -2,7 +2,6 @@ package com.example.vasskob.customview;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
@@ -22,8 +21,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
         Button accelerateButton = (Button) findViewById(R.id.button_accelerate);
-//      accelerateButton.setOnTouchListener(this);
-
         accelerateButton.setOnTouchListener(new RepeatListener(0, 0,
                 new View.OnClickListener() {
                     @Override
@@ -34,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        speedometerView.acceleratorRelease();
+                        speedometerView.acceleratorReleased();
                     }
                 }
         ));
@@ -49,15 +46,22 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        speedometerView.brakeRelease();
+                        speedometerView.brakeReleased();
                     }
                 }
         ));
 
     }
-//    brakeButton.setOnTouchListener(this);
+}
+
+//       implements OnTouchListener()
+//        Button accelerateButton = (Button) findViewById(R.id.button_accelerate);
+//        accelerateButton.setOnTouchListener(this);
+//        Button brakeButton = (Button) findViewById(R.id.button_brake);
+//        brakeButton.setOnTouchListener(this);
+//    }
 //    @Override
-//    public boolean onTouch(View v, MotionEvent event) {
+//    public boolean onTouch (View v, MotionEvent event){
 //        switch (v.getId()) {
 //            case R.id.button_accelerate:
 //                switch (event.getAction()) {
@@ -69,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 //                        break;
 //                    case MotionEvent.ACTION_UP: // отпускание
 //                    case MotionEvent.ACTION_CANCEL:
-//                        speedometerView.acceleratorRelease();
+//                        speedometerView.acceleratorReleased();
 //                        break;
 //                }
 //                break;
@@ -82,11 +86,11 @@ public class MainActivity extends AppCompatActivity {
 //                        break;
 //                    case MotionEvent.ACTION_UP: // отпускание
 //                    case MotionEvent.ACTION_CANCEL:
-//                        speedometerView.brakeRelease();
+//                        speedometerView.brakeReleased();
 //                        break;
 //                }
 //                break;
 //        }
 //        return true;
 //    }
-}
+// }
