@@ -1,22 +1,25 @@
 package com.example.vasskob.customview;
 
-import android.animation.TypeEvaluator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
+
+import java.util.Locale;
 
 public class SpeedometerView extends View {
 
     private static final String POINTER_RADIUS_WARN = "Pointer radius must be in range [0,100]";
     private static final String INNER_SECTOR_RADIUS_WARN = "Inner radius must be in range [0,99] &  < than outer radius.";
     private static final String OUTER_SECTOR_RADIUS_WARN = "Outer radius must be in range [1,100] & > than inner radius.";
-    private static final String MAX_SPEED_WARN = "Max speed must be > than 60 & divisible by 10";
+    private static final String MAX_SPEED_WARN = "Max speed must be in range [0,400] & be divisible by 10";
     private static final String NEGATIVE_SPEED_WARN = "Non-positive value specified as a speed.";
 
     private static final double MATH_PI = Math.PI;
@@ -32,6 +35,10 @@ public class SpeedometerView extends View {
     private static final float POSITIVE_ACCELERATION = 0.4f;
     private static final float NEGATIVE_ACCELERATION = -0.8f;
     private static final float IDLING_ACCELERATION = -0.02f;
+    private static final int MSG_INVALIDATE = 0;
+    private static final long INVALIDATE_DELAY = 1000 / 24;
+    private static final String TAG = SpeedometerView.class.getSimpleName();
+    private static final float MIN_INC_VALUE = 0.3f;
 
     private int spBackgroundColor;
     private int digitsColor;
@@ -59,6 +66,19 @@ public class SpeedometerView extends View {
 
     private Path borderPath;
     private RectF oval;
+
+    public Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Log.d(TAG, "handleMessage: msg: " + msg.what);
+            if (msg.what == MSG_INVALIDATE) {
+                invalidate();
+                sendEmptyMessageDelayed(MSG_INVALIDATE, INVALIDATE_DELAY);
+            }
+        }
+    };
+    private float incCoefficient = 0;
 
     public SpeedometerView(Context context) {
         super(context);
@@ -90,6 +110,8 @@ public class SpeedometerView extends View {
 
         } finally {
             a.recycle();
+
+
         }
         init();
     }
@@ -127,73 +149,111 @@ public class SpeedometerView extends View {
         borderPath = new Path();
     }
 
+//    @Override
+//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+//        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+//        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+//
+//        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+//        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+//
+//        int chosenWidth = chooseDimension(widthMode, widthSize);
+//        int chosenHeight = chooseDimension(heightMode, heightSize);
+//
+//        int chosenDimension = Math.min(chosenWidth, chosenHeight);
+//        centerX = chosenDimension / 2;
+//        centerY = chosenDimension / 2;
+//
+//        setMeasuredDimension(chosenDimension, chosenDimension);
+//    }
+//
+//    private int chooseDimension(int widthMode, int widthSize) {
+//        if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.EXACTLY) {
+//            return widthSize;
+//        } else {
+//            return getPreferredSize();
+//        }
+//
+//    }
+//
+//    private int getPreferredSize() {
+//        return 250;
+//    }
+
+    private void startInvalidateAnimation() {
+        Log.d(TAG, "startInvalidateAnimation: ");
+        handler.removeMessages(MSG_INVALIDATE);
+        handler.sendEmptyMessage(MSG_INVALIDATE);
+    }
+
+    /**
+     * method handle view destroy
+     */
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-
-        int chosenWidth = chooseDimension(widthMode, widthSize);
-        int chosenHeight = chooseDimension(heightMode, heightSize);
-
-        int chosenDimension = Math.min(chosenWidth, chosenHeight);
-        centerX = chosenDimension / 2;
-        centerY = chosenDimension / 2;
-
-        setMeasuredDimension(chosenDimension, chosenDimension);
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        handler.removeMessages(MSG_INVALIDATE);
     }
 
-    private int chooseDimension(int widthMode, int widthSize) {
-        if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.EXACTLY) {
-            return widthSize;
-        } else {
-            return getPreferredSize();
-        }
-
-    }
-
-    private int getPreferredSize() {
-        return 250;
-    }
-
-
+    /**
+     * increase state of view
+     */
     public void acceleratorPressed() {
-        setCurrentSpeed(currentSpeed + POSITIVE_ACCELERATION, 0, 0);
+        incCoefficient = 3 * MIN_INC_VALUE;
+        startInvalidateAnimation();
     }
+
 
     public void acceleratorReleased() {
-        setCurrentSpeed(currentSpeed + IDLING_ACCELERATION, 0, 0);
+        incCoefficient = -1 * MIN_INC_VALUE;
+        startInvalidateAnimation();
+
     }
 
     public void brakePressed() {
-        setCurrentSpeed(currentSpeed + NEGATIVE_ACCELERATION, 0, 0);
+        incCoefficient = -4 * MIN_INC_VALUE;
+        startInvalidateAnimation();
     }
 
     public void brakeReleased() {
-        setCurrentSpeed(currentSpeed + IDLING_ACCELERATION, 0, 0);
+        incCoefficient = -1 * MIN_INC_VALUE;
+        startInvalidateAnimation();
+
     }
 
+    /**
+     * Method handle view state & draw all elements
+     *
+     * @param canvas
+     */
     @Override
     protected void onDraw(Canvas canvas) {
+
+        updateCurrentSpeed();
+        Log.d(TAG, "onDraw: currentSpeed: " + currentSpeed);
         drawBackground(canvas);
         drawBorder(canvas);
         drawDigits(canvas);
         drawSectorAfterPointer(canvas);
         drawSectorBeforePointer(canvas);
         drawPointer(canvas);
+
+    }
+
+    private void updateCurrentSpeed() {
+        setCurrentSpeed(currentSpeed + incCoefficient);
+
     }
 
     private synchronized void drawSectorAfterPointer(Canvas canvas) {
         sectorAfterPointerPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
-        RectF rect = getOval(canvas, outerSectorRadius / (1f*MAX_VALUE_OF_RADIUS));
+        RectF rect = getOval(canvas, outerSectorRadius / (float) MAX_VALUE_OF_RADIUS);
         canvas.drawArc(rect, angle, -HALF_CIRCLE_DEGREES, false, sectorAfterPointerPaint);
     }
 
     private synchronized void drawSectorBeforePointer(Canvas canvas) {
         sectorBeforePointerPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
-        RectF rect = getOval(canvas, outerSectorRadius / (1f*MAX_VALUE_OF_RADIUS));
+        RectF rect = getOval(canvas, outerSectorRadius / (float) MAX_VALUE_OF_RADIUS);
         canvas.drawArc(rect, -HALF_CIRCLE_DEGREES, angle, false, sectorBeforePointerPaint);
     }
 
@@ -208,7 +268,7 @@ public class SpeedometerView extends View {
         for (int i = increments; i < maxSpeed; i += increments) {
             circle.addCircle(centerX, centerY, (oval.width() / 2 - oval.width() / 8), Path.Direction.CW);
             digitsPaint.setTextSize(SCALE_SIZE * oval.width() / getMaxSpeed());
-            canvas.drawTextOnPath(String.format("%d", i),
+            canvas.drawTextOnPath(String.format(Locale.getDefault(), "%d", i),
                     circle,
                     (float) (i * halfCircumference / maxSpeed),
                     -10f,
@@ -235,7 +295,7 @@ public class SpeedometerView extends View {
     private void drawPointer(Canvas canvas) {
 
         pointerPaint.setStrokeWidth(oval.width() / 65f);
-        float radius = pointerRadius * oval.width() / (2f*MAX_VALUE_OF_RADIUS);
+        float radius = pointerRadius * oval.width() / (2f * MAX_VALUE_OF_RADIUS);
         RectF smallOval = getOval(canvas, 0.1f);
         angle = currentSpeed / maxSpeed * HALF_CIRCLE_DEGREES;
         canvas.drawLine(
@@ -386,7 +446,7 @@ public class SpeedometerView extends View {
     public void setCurrentSpeed(float currentSpeed) {
 
         if (currentSpeed < 0)
-            throw new IllegalArgumentException(NEGATIVE_SPEED_WARN);
+            currentSpeed = 0;
         if (currentSpeed > maxSpeed)
             currentSpeed = maxSpeed;
         this.currentSpeed = currentSpeed;
@@ -394,34 +454,5 @@ public class SpeedometerView extends View {
 
     }
 
-    public ValueAnimator setCurrentSpeed(float progress, long duration, long startDelay) {
-        if (progress < 0)
-            progress = 0;
-
-        // throw new IllegalArgumentException("Negative value specified as a speed.");
-
-        if (progress > maxSpeed)
-            progress = maxSpeed;
-
-        ValueAnimator va = ValueAnimator.ofObject(new TypeEvaluator<Float>() {
-            @Override
-            public Float evaluate(float fraction, Float startValue, Float endValue) {
-                return startValue + fraction * (endValue - startValue);
-            }
-
-        }, getCurrentSpeed(), progress);
-
-        va.setDuration(duration);
-        va.setStartDelay(startDelay);
-        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            public void onAnimationUpdate(ValueAnimator animation) {
-                Float value = (Float) animation.getAnimatedValue();
-                if (value != null)
-                    setCurrentSpeed(value);
-            }
-        });
-        va.start();
-        return va;
-    }
 
 }

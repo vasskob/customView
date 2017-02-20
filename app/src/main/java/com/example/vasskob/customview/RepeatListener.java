@@ -71,9 +71,9 @@ class RepeatListener implements OnTouchListener {
                 unPressHandler.removeCallbacks(unPressRunnable);
                 onPressHandler.postDelayed(onPressRunnable, initialInterval);
 
-                downView = view;
-                downView.setPressed(true);
-                onClickListener.onClick(view);
+//                downView = view;
+//                downView.setPressed(true);
+//                onClickListener.onClick(view);
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
@@ -81,9 +81,9 @@ class RepeatListener implements OnTouchListener {
                 unPressHandler.removeCallbacks(unPressRunnable);
                 unPressHandler.postDelayed(unPressRunnable, initialInterval);
 
-                downView.setPressed(false);
-                downView = null;
-                unClickListener.onClick(view);
+//                downView.setPressed(false);
+//                downView = null;
+//                unClickListener.onClick(view);
                 return true;
         }
         return false;
