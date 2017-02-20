@@ -20,7 +20,6 @@ public class SpeedometerView extends View {
     private static final String INNER_SECTOR_RADIUS_WARN = "Inner radius must be in range [0,99] &  < than outer radius.";
     private static final String OUTER_SECTOR_RADIUS_WARN = "Outer radius must be in range [1,100] & > than inner radius.";
     private static final String MAX_SPEED_WARN = "Max speed must be in range [0,400] & be divisible by 10";
-    private static final String NEGATIVE_SPEED_WARN = "Non-positive value specified as a speed.";
 
     private static final double MATH_PI = Math.PI;
     private static final int MAX_SPEED_DIVISIBLE_BY = 10;
@@ -31,14 +30,17 @@ public class SpeedometerView extends View {
     private static final float SCALE_WIDTH = 1.5f;
     private static final float DIGITS_WIDTH = 2f;
     private static final float SCALE_SIZE = 5f;
-    private static final float BORDER_WIDTH = 15f;
-    private static final float POSITIVE_ACCELERATION = 0.4f;
-    private static final float NEGATIVE_ACCELERATION = -0.8f;
-    private static final float IDLING_ACCELERATION = -0.02f;
+    //    private static final float BORDER_WIDTH = 15f;
+//    private static final float POSITIVE_ACCELERATION = 0.4f;
+//    private static final float NEGATIVE_ACCELERATION = -0.8f;
+//    private static final float IDLING_ACCELERATION = -0.02f;
     private static final int MSG_INVALIDATE = 0;
     private static final long INVALIDATE_DELAY = 1000 / 24;
     private static final String TAG = SpeedometerView.class.getSimpleName();
-    private static final float MIN_INC_VALUE = 0.3f;
+    private static final float MIN_INC_VALUE = 0.08f;
+
+    private static boolean braking = false;
+    private static boolean accelerating = false;
 
     private int spBackgroundColor;
     private int digitsColor;
@@ -101,6 +103,8 @@ public class SpeedometerView extends View {
             setMaxSpeed(maxSpeed);
             currentSpeed = a.getFloat(R.styleable.SpeedometerView_currentSpeed, 0);
             setCurrentSpeed(currentSpeed);
+            if (currentSpeed > 0)
+                acceleratorReleased();
             spBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, 0);
             digitsColor = a.getColor(R.styleable.SpeedometerView_digitsColor, 0);
             sectorBeforePointerColor = a.getColor(R.styleable.SpeedometerView_sectorBeforePointerColor, 0);
@@ -123,7 +127,7 @@ public class SpeedometerView extends View {
         borderPaint = new Paint();
         borderPaint.setColor(borderColor);
         borderPaint.setStyle(Paint.Style.STROKE);
-        borderPaint.setStrokeWidth(BORDER_WIDTH);
+        // borderPaint.setStrokeWidth(BORDER_WIDTH);
         borderPaint.setShadowLayer(5f, 0f, 0f, borderColor);
         borderPaint.setAntiAlias(true);
 
@@ -149,36 +153,41 @@ public class SpeedometerView extends View {
         borderPath = new Path();
     }
 
-//    @Override
-//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-//        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-//        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-//
-//        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-//        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-//
-//        int chosenWidth = chooseDimension(widthMode, widthSize);
-//        int chosenHeight = chooseDimension(heightMode, heightSize);
-//
-//        int chosenDimension = Math.min(chosenWidth, chosenHeight);
-//        centerX = chosenDimension / 2;
-//        centerY = chosenDimension / 2;
-//
-//        setMeasuredDimension(chosenDimension, chosenDimension);
-//    }
-//
-//    private int chooseDimension(int widthMode, int widthSize) {
-//        if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.EXACTLY) {
-//            return widthSize;
-//        } else {
-//            return getPreferredSize();
-//        }
-//
-//    }
-//
-//    private int getPreferredSize() {
-//        return 250;
-//    }
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+        int width;
+        int height;
+        if (widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST) {
+            width = widthSize;
+        } else {
+            width = -1;
+        }
+
+        if (heightMode == MeasureSpec.EXACTLY || heightMode == MeasureSpec.AT_MOST) {
+            height = heightSize;
+        } else {
+            height = -1;
+        }
+
+        if (height >= 0 && width >= 0) {
+            width = Math.min(height, width);
+            height = width / 2;
+        } else if (width >= 0) {
+            height = width / 2;
+        } else if (height >= 0) {
+            width = height * 2;
+        } else {
+            width = 0;
+            height = 0;
+        }
+        setMeasuredDimension(width, height);
+    }
+
 
     private void startInvalidateAnimation() {
         Log.d(TAG, "startInvalidateAnimation: ");
@@ -199,32 +208,45 @@ public class SpeedometerView extends View {
      * increase state of view
      */
     public void acceleratorPressed() {
-        incCoefficient = 3 * MIN_INC_VALUE;
+        accelerating = true;
+        if (!braking) {
+            incCoefficient = 8 * MIN_INC_VALUE;
+        }
         startInvalidateAnimation();
     }
 
 
     public void acceleratorReleased() {
-        incCoefficient = -1 * MIN_INC_VALUE;
+        accelerating = false;
+        if (!braking) {
+            incCoefficient = -1 * MIN_INC_VALUE;
+        }
         startInvalidateAnimation();
 
     }
 
     public void brakePressed() {
-        incCoefficient = -4 * MIN_INC_VALUE;
+
+        braking = true;
+        incCoefficient = -16 * MIN_INC_VALUE;
         startInvalidateAnimation();
+
     }
 
     public void brakeReleased() {
-        incCoefficient = -1 * MIN_INC_VALUE;
-        startInvalidateAnimation();
+        braking = false;
+        if (!accelerating) {
+            incCoefficient = -1 * MIN_INC_VALUE;
+            startInvalidateAnimation();
+        } else acceleratorPressed();
+
 
     }
 
     /**
      * Method handle view state & draw all elements
      *
-     * @param canvas
+     * @param canvas 0f drawing view element
      */
     @Override
     protected void onDraw(Canvas canvas) {
@@ -241,7 +263,13 @@ public class SpeedometerView extends View {
     }
 
     private void updateCurrentSpeed() {
-        setCurrentSpeed(currentSpeed + incCoefficient);
+        if (currentSpeed < 30 && currentSpeed > 0 && incCoefficient > 0)
+            setCurrentSpeed(currentSpeed + incCoefficient);
+        else if (currentSpeed < 70 && currentSpeed >= 30 && incCoefficient > 0)
+            setCurrentSpeed(currentSpeed + incCoefficient * 0.8f);
+        else if (currentSpeed < maxSpeed && incCoefficient > 0)
+            setCurrentSpeed(currentSpeed + incCoefficient * 0.6f);
+        else setCurrentSpeed(currentSpeed + incCoefficient);
 
     }
 
@@ -278,7 +306,7 @@ public class SpeedometerView extends View {
     }
 
     private void drawBorder(Canvas canvas) {
-
+        borderPaint.setStrokeWidth(oval.width() / 90);
         RectF ovalScale = getOval(canvas, 0.95f);
         RectF ovalBorder = getOval(canvas, 0.99f);
         borderPath.reset();
