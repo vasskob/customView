@@ -18,19 +18,39 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:layout_marginBottom="20dp"
         android:contentDescription="@string/description"
+        custom:backgroundColor="@color/gray_900"
+        custom:borderColor="@color/gray_100"
         custom:currentSpeed="30"
-        custom:maxSpeed="100"
+        custom:digitsColor="@color/gray_50"
         custom:innerSectorRadius="30"
+        custom:maxSpeed="100"
         custom:outerSectorRadius="40"
+        custom:pointerColor="@color/red_700"
         custom:pointerRadius="70"
-        custom:backgroundColor="@color/colorBackground"
-        custom:borderColor="@color/colorBorder"
-        custom:pointerColor="@color/colorPointer"
-        custom:digitsColor="@color/colorDigits"
-        custom:sectorAfterPointerColor="@color/colorSectorAfter"
-        custom:sectorBeforePointerColor="@color/colorSectorBefore"/>
+        custom:sectorAfterPointerColor="@color/lightBlue_800"
+        custom:sectorBeforePointerColor="@color/lightBlue_300"/>
 
+    <com.example.vasskob.customview.SpeedometerView
+        android:id="@+id/speedometer_view2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/speedometer_view"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/description"
+        custom:currentSpeed="40"
+        custom:maxSpeed="60"
+        />
+
+    <TextView
+        android:id="@+id/speed_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_below="@+id/speedometer_view2"
+        android:textSize="40sp"
+        />
 
     <ImageButton
         android:id="@+id/button_brake"

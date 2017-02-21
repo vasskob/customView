@@ -4,11 +4,16 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
-    <color name="colorPointer">#D32F2F</color>
-    <color name="colorBorder">#F5F5F5</color>
-    <color name="colorBackground">#212121</color>
-    <color name="colorDigits">#FAFAFA</color>
-    <color name="colorSectorBefore">#4FC3F7</color>
-    <color name="colorSectorAfter">#0277BD</color>
+    <color name="red_700">#D32F2F</color>
+    <color name="gray_100">#F5F5F5</color>
+    <color name="gray_300">#E0E0E0</color>
+    <color name="gray_900">#212121</color>
+    <color name="gray_50">#FAFAFA</color>
+    <color name="lightBlue_300">#4FC3F7</color>
+    <color name="lightBlue_800">#0277BD</color>
+
+    <color name="black">#000000</color>
+    <color name="cyan_500">#00BCD4</color>
+    <color name="lightBlue_900">#01579B</color>
 
 </resources>
