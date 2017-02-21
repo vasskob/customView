@@ -84,6 +84,8 @@ public class SpeedometerView extends View {
             if (msg.what == MSG_INVALIDATE) {
                 invalidate();
                 sendEmptyMessageDelayed(MSG_INVALIDATE, INVALIDATE_DELAY);
+                if (mOnSpeedChangedListener != null)
+                    mOnSpeedChangedListener.onSpeedChanged((int) currentSpeed);
             }
         }
     };
@@ -120,6 +122,7 @@ public class SpeedometerView extends View {
             maxSpeed = a.getInteger(R.styleable.SpeedometerView_maxSpeed, 0);
             setMaxSpeed(maxSpeed);
             currentSpeed = a.getFloat(R.styleable.SpeedometerView_currentSpeed, 0);
+            setCurrentSpeed(currentSpeed);
             if (currentSpeed > 0)
                 acceleratorReleased();
             viewBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, 0);
@@ -525,7 +528,6 @@ public class SpeedometerView extends View {
         if (currentSpeed > maxSpeed)
             currentSpeed = maxSpeed;
         this.currentSpeed = currentSpeed;
-        mOnSpeedChangedListener.onSpeedChanged((int) currentSpeed);
         invalidate();
 
     }

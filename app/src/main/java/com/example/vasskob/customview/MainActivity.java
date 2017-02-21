@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements View.OnTouchListener, SpeedometerView.OnSpeedChangedListener {
+public class MainActivity extends AppCompatActivity implements View.OnTouchListener{
 
     private SpeedometerView speedometerView,
             speedometerView2;
@@ -26,9 +26,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
         speedometerView2 = (SpeedometerView) findViewById(R.id.speedometer_view2);
+        textView = (TextView) findViewById(R.id.speed_txt);
 
-        speedometerView2.setOnSpeedChangedListener(this);
-        speedometerView2.setCurrentSpeed(speedometerView2.getCurrentSpeed());
+        speedometerView2.setOnSpeedChangedListener(new SpeedometerView.OnSpeedChangedListener() {
+            @Override
+            public void onSpeedChanged(int value) {
+                textView.setText(String.valueOf(value));
+            }
+        });
 
         speedometerView2.setBorderColor(getResources().getColor(R.color.gray_900));
         speedometerView2.setDigitsColor(getResources().getColor(R.color.gray_900));
@@ -60,13 +65,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     case MotionEvent.ACTION_DOWN:
                         speedometerView.acceleratorPressed();
                         speedometerView2.acceleratorPressed();
-                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
+//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         speedometerView.acceleratorReleased();
                         speedometerView2.acceleratorReleased();
-                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
+//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                 }
                 break;
@@ -75,23 +80,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     case MotionEvent.ACTION_DOWN:
                         speedometerView.brakePressed();
                         speedometerView2.brakePressed();
-                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
+//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         speedometerView.brakeReleased();
                         speedometerView2.brakeReleased();
-                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
+//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                 }
                 break;
         }
         return true;
-    }
-
-    @Override
-    public void onSpeedChanged(int value) {
-        textView = (TextView) findViewById(R.id.speed_txt);
-        textView.setText(String.valueOf(value));
     }
 }
