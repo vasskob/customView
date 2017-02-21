@@ -26,6 +26,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
         speedometerView2 = (SpeedometerView) findViewById(R.id.speedometer_view2);
+
+        speedometerView2.setOnSpeedChangedListener(this);
+        speedometerView2.setCurrentSpeed(speedometerView2.getCurrentSpeed());
+
         speedometerView2.setBorderColor(getResources().getColor(R.color.gray_900));
         speedometerView2.setDigitsColor(getResources().getColor(R.color.gray_900));
         speedometerView2.setPointerColor(getResources().getColor(R.color.black));
@@ -33,20 +37,18 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         speedometerView2.setSectorAfterPointerColor(getResources().getColor(R.color.lightBlue_900));
         speedometerView2.setSectorBeforePointerColor(getResources().getColor(R.color.cyan_500));
         speedometerView2.setMaxSpeed(180);
+
+
         speedometerView2.setCurrentSpeed(50);
         speedometerView2.setPointerRadius(75);
         speedometerView2.setInnerSectorRadius(20);
         speedometerView2.setOuterSectorRadius(35);
 
-  //      speedometerView2.setmOnSpeedChangedListener(this);
 
         ImageButton accelerateButton = (ImageButton) findViewById(R.id.button_accelerate);
         accelerateButton.setOnTouchListener(this);
         ImageButton brakeButton = (ImageButton) findViewById(R.id.button_brake);
         brakeButton.setOnTouchListener(this);
-        textView = (TextView) findViewById(R.id.speed_txt);
-
-
     }
 
 
@@ -89,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     @Override
     public void onSpeedChanged(int value) {
+        textView = (TextView) findViewById(R.id.speed_txt);
         textView.setText(String.valueOf(value));
     }
 }

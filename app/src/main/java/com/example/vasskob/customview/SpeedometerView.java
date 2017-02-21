@@ -120,7 +120,6 @@ public class SpeedometerView extends View {
             maxSpeed = a.getInteger(R.styleable.SpeedometerView_maxSpeed, 0);
             setMaxSpeed(maxSpeed);
             currentSpeed = a.getFloat(R.styleable.SpeedometerView_currentSpeed, 0);
-            setCurrentSpeed(currentSpeed);
             if (currentSpeed > 0)
                 acceleratorReleased();
             viewBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, 0);
@@ -526,11 +525,12 @@ public class SpeedometerView extends View {
         if (currentSpeed > maxSpeed)
             currentSpeed = maxSpeed;
         this.currentSpeed = currentSpeed;
-    //    mOnSpeedChangedListener.onSpeedChanged((int) currentSpeed);
+        mOnSpeedChangedListener.onSpeedChanged((int) currentSpeed);
         invalidate();
 
     }
-    public void setmOnSpeedChangedListener(OnSpeedChangedListener mOnSpeedChangedListener) {
+
+    public void setOnSpeedChangedListener(OnSpeedChangedListener mOnSpeedChangedListener) {
         this.mOnSpeedChangedListener = mOnSpeedChangedListener;
     }
 
