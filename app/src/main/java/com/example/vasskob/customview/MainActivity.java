@@ -37,15 +37,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         speedometerView2.setBorderColor(getResources().getColor(R.color.gray_900));
         speedometerView2.setDigitsColor(getResources().getColor(R.color.gray_900));
-        speedometerView2.setPointerColor(getResources().getColor(R.color.black));
+        speedometerView2.setSpeedArrowColor(getResources().getColor(R.color.black));
         speedometerView2.setViewBackgroundColor(getResources().getColor(R.color.gray_300));
-        speedometerView2.setSectorAfterPointerColor(getResources().getColor(R.color.lightBlue_900));
-        speedometerView2.setSectorBeforePointerColor(getResources().getColor(R.color.cyan_500));
+        speedometerView2.setSectorAfterSpeedArrowColor(getResources().getColor(R.color.lightBlue_900));
+        speedometerView2.setSectorBeforeSpeedArrowColor(getResources().getColor(R.color.cyan_500));
         speedometerView2.setMaxSpeed(180);
 
 
         speedometerView2.setCurrentSpeed(50);
-        speedometerView2.setPointerRadius(75);
+        speedometerView2.setSpeedArrowRadius(75);
         speedometerView2.setInnerSectorRadius(20);
         speedometerView2.setOuterSectorRadius(35);
 

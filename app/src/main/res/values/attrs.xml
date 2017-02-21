@@ -3,11 +3,11 @@
     <declare-styleable name="SpeedometerView">
         <attr name="backgroundColor" format="color"/>
         <attr name="digitsColor" format="color"/>
-        <attr name="sectorBeforePointerColor" format="color"/>
-        <attr name="sectorAfterPointerColor" format="color"/>
-        <attr name="pointerColor" format="color"/>
+        <attr name="sectorBeforeSpeedArrowColor" format="color"/>
+        <attr name="sectorAfterSpeedArrowColor" format="color"/>
+        <attr name="speedArrowColor" format="color"/>
         <attr name="borderColor" format="color"/>
-        <attr name="pointerRadius" format="integer"/>
+        <attr name="speedArrowRadius" format="integer"/>
         <attr name="innerSectorRadius" format="integer"/>
         <attr name="outerSectorRadius" format="integer"/>
         <attr name="maxSpeed" format="integer"/>

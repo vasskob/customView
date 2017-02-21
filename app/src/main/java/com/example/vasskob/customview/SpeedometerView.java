@@ -18,7 +18,7 @@ import java.util.Locale;
 
 public class SpeedometerView extends View {
 
-    private static final String POINTER_RADIUS_WARN = "Pointer radius must be in range [0,100]";
+    private static final String SPEED_ARROW_RADIUS_WARN = "Speed arrow radius must be in range [0,100]";
     private static final String INNER_SECTOR_RADIUS_WARN = "Inner radius must be in range [0,99] &  < than outer radius.";
     private static final String OUTER_SECTOR_RADIUS_WARN = "Outer radius must be in range [1,100] & > than inner radius.";
     private static final String MAX_SPEED_WARN = "Max speed must be in range [0,400] & be divisible by 10";
@@ -36,7 +36,7 @@ public class SpeedometerView extends View {
     private static final long INVALIDATE_DELAY = 1000 / 24;
     private static final String TAG = SpeedometerView.class.getSimpleName();
     private static final float MIN_INC_VALUE = 0.08f;
-    private static final int DEFAULT_POINTER_RADIUS = 50;
+    private static final int DEFAULT_SPEED_ARROW_RADIUS = 50;
     private static final int DEFAULT_INNER_SECTOR_RADIUS = 30;
     private static final int DEFAULT_OUTER_SECTOR_RADIUS = 40;
     private static final int DEFAULT_MAX_SPEED = 100;
@@ -46,24 +46,25 @@ public class SpeedometerView extends View {
 
     private int viewBackgroundColor;
     private int digitsColor;
-    private int sectorBeforePointerColor;
-    private int sectorAfterPointerColor;
-    private int pointerColor;
+    private int sectorBeforeSpeedArrowColor;
+    private int sectorAfterSpeedArrowColor;
+    private int speedArrowColor;
     private int borderColor;
 
-    private int pointerRadius;
+    private int speedArrowRadius;
     private int innerSectorRadius;
     private int outerSectorRadius;
     private int maxSpeed;
 
-    private Paint pointerPaint;
+    private Paint speedArrowPaint;
     private Paint borderPaint;
     private Paint backgroundPaint;
     private Paint digitsPaint;
-    private Paint sectorBeforePointerPaint;
-    private Paint sectorAfterPointerPaint;
+    private Paint sectorBeforeSpeedArrowPaint;
+    private Paint sectorAfterSpeedArrowPaint;
     private Bitmap mMask;
     private Paint maskPaint;
+    private Paint fuelArrowPaint;
 
 
     private float centerX;
@@ -80,7 +81,7 @@ public class SpeedometerView extends View {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            Log.d(TAG, "handleMessage: msg: " + msg.what);
+            //      Log.d(TAG, "handleMessage: msg: " + msg.what);
             if (msg.what == MSG_INVALIDATE) {
                 invalidate();
                 sendEmptyMessageDelayed(MSG_INVALIDATE, INVALIDATE_DELAY);
@@ -92,18 +93,18 @@ public class SpeedometerView extends View {
 
     public SpeedometerView(Context context) {
         super(context);
-        pointerRadius = DEFAULT_POINTER_RADIUS;
+        speedArrowRadius = DEFAULT_SPEED_ARROW_RADIUS;
         innerSectorRadius = DEFAULT_INNER_SECTOR_RADIUS;
         outerSectorRadius = DEFAULT_OUTER_SECTOR_RADIUS;
         maxSpeed = DEFAULT_MAX_SPEED;
         currentSpeed = 0;
         viewBackgroundColor = getResources().getColor(R.color.gray_100);
         digitsColor = getResources().getColor(R.color.gray_900);
-        sectorBeforePointerColor = getResources().getColor(R.color.lightBlue_300);
-        sectorAfterPointerColor = getResources().getColor(R.color.cyan_500);
-        pointerColor = getResources().getColor(R.color.black);
+        sectorBeforeSpeedArrowColor = getResources().getColor(R.color.lightBlue_300);
+        sectorAfterSpeedArrowColor = getResources().getColor(R.color.cyan_500);
+        speedArrowColor = getResources().getColor(R.color.black);
         borderColor = getResources().getColor(R.color.gray_900);
-       // mOnSpeedChangedListener = speedChangeListener;
+        // mOnSpeedChangedListener = speedChangeListener;
         init();
     }
 
@@ -113,8 +114,8 @@ public class SpeedometerView extends View {
                 attrs, R.styleable.SpeedometerView, 0, 0);
         try {
 
-            pointerRadius = a.getInteger(R.styleable.SpeedometerView_pointerRadius, 0);
-            setPointerRadius(pointerRadius);
+            speedArrowRadius = a.getInteger(R.styleable.SpeedometerView_speedArrowRadius, 0);
+            setSpeedArrowRadius(speedArrowRadius);
             innerSectorRadius = a.getInteger(R.styleable.SpeedometerView_innerSectorRadius, 0);
             setInnerSectorRadius(innerSectorRadius);
             outerSectorRadius = a.getInteger(R.styleable.SpeedometerView_outerSectorRadius, 0);
@@ -128,26 +129,21 @@ public class SpeedometerView extends View {
             viewBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, 0);
 
             digitsColor = a.getColor(R.styleable.SpeedometerView_digitsColor, 0);
-            sectorBeforePointerColor = a.getColor(R.styleable.SpeedometerView_sectorBeforePointerColor, 0);
-            sectorAfterPointerColor = a.getColor(R.styleable.SpeedometerView_sectorAfterPointerColor, 0);
-            pointerColor = a.getColor(R.styleable.SpeedometerView_pointerColor, 0);
+            sectorBeforeSpeedArrowColor = a.getColor(R.styleable.SpeedometerView_sectorBeforeSpeedArrowColor, 0);
+            sectorAfterSpeedArrowColor = a.getColor(R.styleable.SpeedometerView_sectorAfterSpeedArrowColor, 0);
+            speedArrowColor = a.getColor(R.styleable.SpeedometerView_speedArrowColor, 0);
 
             borderColor = a.getColor(R.styleable.SpeedometerView_borderColor, 0);
 
         } finally {
             a.recycle();
-
-
         }
-
-
         init();
     }
 
     private void init() {
-        pointerPaint = new Paint();
-        pointerPaint.setColor(pointerColor);
-
+        speedArrowPaint = new Paint();
+        speedArrowPaint.setColor(speedArrowColor);
 
         borderPaint = new Paint();
         borderPaint.setColor(borderColor);
@@ -166,22 +162,24 @@ public class SpeedometerView extends View {
         digitsPaint.setShadowLayer(5f, 0f, 0f, digitsColor);
         digitsPaint.setAntiAlias(true);
 
-        sectorBeforePointerPaint = new Paint();
-        sectorBeforePointerPaint.setColor(sectorBeforePointerColor);
-        sectorBeforePointerPaint.setStyle(Paint.Style.STROKE);
+        sectorBeforeSpeedArrowPaint = new Paint();
+        sectorBeforeSpeedArrowPaint.setColor(sectorBeforeSpeedArrowColor);
+        sectorBeforeSpeedArrowPaint.setStyle(Paint.Style.STROKE);
 
-        sectorAfterPointerPaint = new Paint();
-        sectorAfterPointerPaint.setColor(sectorAfterPointerColor);
-        sectorAfterPointerPaint.setStyle(Paint.Style.STROKE);
+        sectorAfterSpeedArrowPaint = new Paint();
+        sectorAfterSpeedArrowPaint.setColor(sectorAfterSpeedArrowColor);
+        sectorAfterSpeedArrowPaint.setStyle(Paint.Style.STROKE);
 
         borderPath = new Path();
 
-
         mMask = BitmapFactory.decodeResource(getResources(), R.drawable.ic_oil);
-        mMask = Bitmap.createBitmap(mMask, 0, 0, mMask.getWidth(), mMask.getHeight() / 2);
+        mMask = Bitmap.createBitmap(mMask, 0, 0, mMask.getWidth(), mMask.getHeight());
 
         maskPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         maskPaint.setDither(true);
+
+        fuelArrowPaint = new Paint();
+        fuelArrowPaint.setColor(getResources().getColor(R.color.gray_600));
     }
 
     @Override
@@ -216,7 +214,7 @@ public class SpeedometerView extends View {
             width = 0;
             height = 0;
         }
-        Log.d(TAG, "onMeasure: width: " + width + " height: " + height);
+        //      Log.d(TAG, "onMeasure: width: " + width + " height: " + height);
         setMeasuredDimension(width, height);
     }
 
@@ -283,23 +281,35 @@ public class SpeedometerView extends View {
     protected void onDraw(Canvas canvas) {
 
         updateCurrentSpeed();
-
 //      Log.d(TAG, "onDraw: currentSpeed: " + currentSpeed);
         drawBackground(canvas);
         drawBorder(canvas);
         drawDigits(canvas);
-        drawSectorAfterPointer(canvas);
-        drawSectorBeforePointer(canvas);
+        drawSectorAfterSpeedArrow(canvas);
+        drawSectorBeforeSpeedArrow(canvas);
         drawFuelState(canvas);
-        drawPointer(canvas);
+        drawSpeedArrow(canvas);
 
     }
 
     private void drawFuelState(Canvas canvas) {
+        float fuelArrowX = centerX - oval.width() / 8;
+        float fuelArrowY = centerY - oval.width() / 3;
+        fuelArrowPaint.setStrokeWidth(oval.width() / 80f);
+        float radius = oval.width() / 10;
+        canvas.drawLine(
+                fuelArrowX + 120, fuelArrowY + 60,
 
-//        Bitmap mask = Bitmap.createScaledBitmap(mMask, (int) (oval.width() * 0.3), (int) (oval.height() * 0.3) / 2, true);
-//        canvas.drawBitmap(mask, oval.centerX() - oval.width()*1.1f/2, oval.centerY()-oval.width()*1.1f/2, maskPaint);
+                (float) (fuelArrowX + 110 - Math.cos((180+angle) /(-270) * MATH_PI) * radius),
+                (float) (fuelArrowY + 60 + Math.sin((180+angle) /(-270) * MATH_PI) * radius),
+                fuelArrowPaint
+        );
 
+        Bitmap mask = Bitmap.createScaledBitmap(mMask, (int) (oval.width() * 0.1), (int) (oval.height() * 0.1), true);
+        canvas.drawBitmap(mask, fuelArrowX, fuelArrowY, maskPaint);
+
+
+        //   Log.d(TAG, "drawFuelState: CenterX & Y " + centerX + " " + centerY);
     }
 
     private void updateCurrentSpeed() {
@@ -316,22 +326,20 @@ public class SpeedometerView extends View {
         } else {
             currentSpeed += incCoefficient;
         }
-     //  mOnSpeedChangedListener.onSpeedChanged((int)currentSpeed);
-
     }
 
-    private synchronized void drawSectorAfterPointer(Canvas canvas) {
-        sectorAfterPointerPaint.setColor(sectorAfterPointerColor);
-        sectorAfterPointerPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
+    private synchronized void drawSectorAfterSpeedArrow(Canvas canvas) {
+        sectorAfterSpeedArrowPaint.setColor(sectorAfterSpeedArrowColor);
+        sectorAfterSpeedArrowPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
         RectF rect = getOval(canvas, outerSectorRadius / (float) MAX_VALUE_OF_RADIUS);
-        canvas.drawArc(rect, angle, -HALF_CIRCLE_DEGREES, false, sectorAfterPointerPaint);
+        canvas.drawArc(rect, angle, -HALF_CIRCLE_DEGREES, false, sectorAfterSpeedArrowPaint);
     }
 
-    private synchronized void drawSectorBeforePointer(Canvas canvas) {
-        sectorBeforePointerPaint.setColor(sectorBeforePointerColor);
-        sectorBeforePointerPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
+    private synchronized void drawSectorBeforeSpeedArrow(Canvas canvas) {
+        sectorBeforeSpeedArrowPaint.setColor(sectorBeforeSpeedArrowColor);
+        sectorBeforeSpeedArrowPaint.setStrokeWidth((outerSectorRadius - innerSectorRadius) * oval.width() / 140);
         RectF rect = getOval(canvas, outerSectorRadius / (float) MAX_VALUE_OF_RADIUS);
-        canvas.drawArc(rect, -HALF_CIRCLE_DEGREES, angle, false, sectorBeforePointerPaint);
+        canvas.drawArc(rect, -HALF_CIRCLE_DEGREES, angle, false, sectorBeforeSpeedArrowPaint);
     }
 
     private void drawDigits(Canvas canvas) {
@@ -370,10 +378,10 @@ public class SpeedometerView extends View {
 
     }
 
-    private void drawPointer(Canvas canvas) {
-        pointerPaint.setColor(pointerColor);
-        pointerPaint.setStrokeWidth(oval.width() / 65f);
-        float radius = pointerRadius * oval.width() / (2f * MAX_VALUE_OF_RADIUS);
+    private void drawSpeedArrow(Canvas canvas) {
+        speedArrowPaint.setColor(speedArrowColor);
+        speedArrowPaint.setStrokeWidth(oval.width() / 65f);
+        float radius = speedArrowRadius * oval.width() / (2f * MAX_VALUE_OF_RADIUS);
         RectF smallOval = getOval(canvas, 0.1f);
         angle = currentSpeed / maxSpeed * HALF_CIRCLE_DEGREES;
         canvas.drawLine(
@@ -381,9 +389,9 @@ public class SpeedometerView extends View {
                 (float) (centerY - Math.sin(angle / HALF_CIRCLE_DEGREES * MATH_PI) * smallOval.width() * 0.5f),
                 (float) (centerX + Math.cos((HALF_CIRCLE_DEGREES - angle) / HALF_CIRCLE_DEGREES * MATH_PI) * radius),
                 (float) (centerY - Math.sin(angle / HALF_CIRCLE_DEGREES * MATH_PI) * radius),
-                pointerPaint
+                speedArrowPaint
         );
-        canvas.drawArc(smallOval, HALF_CIRCLE_DEGREES, HALF_CIRCLE_DEGREES, true, pointerPaint);
+        canvas.drawArc(smallOval, HALF_CIRCLE_DEGREES, HALF_CIRCLE_DEGREES, true, speedArrowPaint);
     }
 
 
@@ -417,14 +425,14 @@ public class SpeedometerView extends View {
 
     // Getters & Setters
 
-    public float getPointerRadius() {
-        return pointerRadius;
+    public float getSpeedArrowRadius() {
+        return speedArrowRadius;
     }
 
-    public void setPointerRadius(int pointerRadius) {
-        if (pointerRadius < 0 || pointerRadius > MAX_VALUE_OF_RADIUS)
-            throw new IllegalArgumentException(POINTER_RADIUS_WARN);
-        this.pointerRadius = pointerRadius;
+    public void setSpeedArrowRadius(int speedArrowRadius) {
+        if (speedArrowRadius < 0 || speedArrowRadius > MAX_VALUE_OF_RADIUS)
+            throw new IllegalArgumentException(SPEED_ARROW_RADIUS_WARN);
+        this.speedArrowRadius = speedArrowRadius;
         invalidate();
     }
 
@@ -481,30 +489,30 @@ public class SpeedometerView extends View {
         invalidate();
     }
 
-    public int getSectorBeforePointerColor() {
-        return sectorBeforePointerColor;
+    public int getSectorBeforeSpeedArrowColor() {
+        return sectorBeforeSpeedArrowColor;
     }
 
-    public void setSectorBeforePointerColor(int sectorBeforePointerColor) {
-        this.sectorBeforePointerColor = sectorBeforePointerColor;
+    public void setSectorBeforeSpeedArrowColor(int sectorBeforeSpeedArrowColor) {
+        this.sectorBeforeSpeedArrowColor = sectorBeforeSpeedArrowColor;
         invalidate();
     }
 
-    public int getSectorAfterPointerColor() {
-        return sectorAfterPointerColor;
+    public int getSectorAfterSpeedArrowColor() {
+        return sectorAfterSpeedArrowColor;
     }
 
-    public void setSectorAfterPointerColor(int sectorAfterPointerColor) {
-        this.sectorAfterPointerColor = sectorAfterPointerColor;
+    public void setSectorAfterSpeedArrowColor(int sectorAfterSpeedArrowColor) {
+        this.sectorAfterSpeedArrowColor = sectorAfterSpeedArrowColor;
         invalidate();
     }
 
-    public int getPointerColor() {
-        return pointerColor;
+    public int getSpeedArrowColor() {
+        return speedArrowColor;
     }
 
-    public void setPointerColor(int pointerColor) {
-        this.pointerColor = pointerColor;
+    public void setSpeedArrowColor(int speedArrowColor) {
+        this.speedArrowColor = speedArrowColor;
         invalidate();
     }
 

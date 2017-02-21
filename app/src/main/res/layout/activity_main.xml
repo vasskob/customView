@@ -27,10 +27,10 @@
         custom:innerSectorRadius="30"
         custom:maxSpeed="100"
         custom:outerSectorRadius="40"
-        custom:pointerColor="@color/red_700"
-        custom:pointerRadius="70"
-        custom:sectorAfterPointerColor="@color/lightBlue_800"
-        custom:sectorBeforePointerColor="@color/lightBlue_300"/>
+        custom:speedArrowColor="@color/red_700"
+        custom:speedArrowRadius="70"
+        custom:sectorAfterSpeedArrowColor="@color/lightBlue_800"
+        custom:sectorBeforeSpeedArrowColor="@color/lightBlue_300"/>
 
     <com.example.vasskob.customview.SpeedometerView
         android:id="@+id/speedometer_view2"
