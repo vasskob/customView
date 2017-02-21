@@ -38,6 +38,7 @@ public class SpeedometerView extends View {
     private static boolean braking = false;
     private static boolean accelerating = false;
 
+    // TODO: 21.02.17 check codestyle for variables name
     private int spBackgroundColor;
     private int digitsColor;
     private int sectorBeforePointerColor;
@@ -70,7 +71,6 @@ public class SpeedometerView extends View {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            Log.d(TAG, "handleMessage: msg: " + msg.what);
             if (msg.what == MSG_INVALIDATE) {
                 invalidate();
                 sendEmptyMessageDelayed(MSG_INVALIDATE, INVALIDATE_DELAY);
@@ -80,6 +80,7 @@ public class SpeedometerView extends View {
 
     public SpeedometerView(Context context) {
         super(context);
+        // TODO: 21.02.17 use default values if view created with this constructor
         init();
     }
 
@@ -169,6 +170,7 @@ public class SpeedometerView extends View {
             height = -1;
         }
 
+        Log.d(TAG, "onMeasure: width: " + width + " height: " + height);
         if (height >= 0 && width >= 0) {
             width = Math.min(height, width);
             height = width / 2;
@@ -185,7 +187,7 @@ public class SpeedometerView extends View {
 
 
     private void startInvalidateAnimation() {
-        Log.d(TAG, "startInvalidateAnimation: ");
+//        Log.d(TAG, "startInvalidateAnimation: ");
         handler.removeMessages(MSG_INVALIDATE);
         handler.sendEmptyMessage(MSG_INVALIDATE);
     }
@@ -230,8 +232,9 @@ public class SpeedometerView extends View {
         if (!accelerating) {
             incCoefficient = -1 * MIN_INC_VALUE;
             startInvalidateAnimation();
-        } else acceleratorPressed();
-
+        } else {
+            acceleratorPressed();
+        }
 
     }
 
@@ -244,7 +247,7 @@ public class SpeedometerView extends View {
     protected void onDraw(Canvas canvas) {
 
         updateCurrentSpeed();
-        Log.d(TAG, "onDraw: currentSpeed: " + currentSpeed);
+//        Log.d(TAG, "onDraw: currentSpeed: " + currentSpeed);
         drawBackground(canvas);
         drawBorder(canvas);
         drawDigits(canvas);
@@ -346,7 +349,6 @@ public class SpeedometerView extends View {
 
         if (canvasHeight * 2 >= canvasWidth) {
             oval = new RectF(0, 0, canvasWidth * factor, canvasWidth * factor);
-
         } else {
             oval = new RectF(0, 0, canvasHeight * 2 * factor, canvasHeight * 2 * factor);
         }
@@ -411,6 +413,7 @@ public class SpeedometerView extends View {
 
     public void setSpBackgroundColor(int backgroundColor) {
         this.spBackgroundColor = backgroundColor;
+        // TODO: 21.02.17 make no sense, need to apply new color
         invalidate();
     }
 
@@ -474,5 +477,6 @@ public class SpeedometerView extends View {
 
     }
 
+    // TODO: 21.02.17  create inner interface, with method onSpeedChanged(int value), so you can check view state from outside
 
 }

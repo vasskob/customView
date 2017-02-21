@@ -31,7 +31,6 @@
         custom:sectorAfterPointerColor="@color/colorSectorAfter"
         custom:sectorBeforePointerColor="@color/colorSectorBefore"/>
 
-
     <ImageButton
         android:id="@+id/button_brake"
         android:layout_width="40dp"
@@ -56,5 +55,22 @@
         android:src="@drawable/accelerator"
         android:text="@string/accelerate"
         />
+
+    <com.example.vasskob.customview.SpeedometerView
+        android:id="@+id/speedometer_view2"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        custom:maxSpeed="180"
+        custom:innerSectorRadius="20"
+        custom:outerSectorRadius="30"
+        custom:pointerRadius="90"
+        custom:backgroundColor="@android:color/darker_gray"
+        custom:borderColor="#0F0"
+        custom:pointerColor="#fF0"
+        custom:digitsColor="#f0f"
+        custom:sectorAfterPointerColor="#fff"
+        custom:sectorBeforePointerColor="#f00"
+        android:layout_below="@+id/speedometer_view"
+        android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>

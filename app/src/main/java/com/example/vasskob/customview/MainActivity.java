@@ -8,7 +8,7 @@ import android.widget.ImageButton;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
 
-    private SpeedometerView speedometerView;
+    private SpeedometerView speedometerView, speedometerView2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +21,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     protected void onStart() {
         super.onStart();
         speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
+        speedometerView2 = (SpeedometerView) findViewById(R.id.speedometer_view2);
+        // TODO: 21.02.17 show that view can be customized from code
         ImageButton accelerateButton = (ImageButton) findViewById(R.id.button_accelerate);
         accelerateButton.setOnTouchListener(this);
         ImageButton brakeButton = (ImageButton) findViewById(R.id.button_brake);
@@ -34,10 +36,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         speedometerView.acceleratorPressed();
+                        speedometerView2.acceleratorPressed();
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         speedometerView.acceleratorReleased();
+                        speedometerView2.acceleratorReleased();
                         break;
                 }
                 break;
@@ -45,10 +49,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         speedometerView.brakePressed();
+                        speedometerView2.brakePressed();
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         speedometerView.brakeReleased();
+                        speedometerView2.brakeReleased();
                         break;
                 }
                 break;
