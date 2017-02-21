@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:contentDescription="@string/description"
-        custom:currentSpeed="80"
+        custom:currentSpeed="30"
         custom:maxSpeed="100"
         custom:innerSectorRadius="30"
         custom:outerSectorRadius="40"

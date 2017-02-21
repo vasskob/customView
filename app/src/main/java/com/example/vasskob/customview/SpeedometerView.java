@@ -30,10 +30,6 @@ public class SpeedometerView extends View {
     private static final float SCALE_WIDTH = 1.5f;
     private static final float DIGITS_WIDTH = 2f;
     private static final float SCALE_SIZE = 5f;
-    //    private static final float BORDER_WIDTH = 15f;
-//    private static final float POSITIVE_ACCELERATION = 0.4f;
-//    private static final float NEGATIVE_ACCELERATION = -0.8f;
-//    private static final float IDLING_ACCELERATION = -0.02f;
     private static final int MSG_INVALIDATE = 0;
     private static final long INVALIDATE_DELAY = 1000 / 24;
     private static final String TAG = SpeedometerView.class.getSimpleName();
@@ -65,6 +61,7 @@ public class SpeedometerView extends View {
     private float centerY;
     private float angle;
     private float currentSpeed;
+    private float incCoefficient = 0;
 
     private Path borderPath;
     private RectF oval;
@@ -80,7 +77,6 @@ public class SpeedometerView extends View {
             }
         }
     };
-    private float incCoefficient = 0;
 
     public SpeedometerView(Context context) {
         super(context);
@@ -127,7 +123,6 @@ public class SpeedometerView extends View {
         borderPaint = new Paint();
         borderPaint.setColor(borderColor);
         borderPaint.setStyle(Paint.Style.STROKE);
-        // borderPaint.setStrokeWidth(BORDER_WIDTH);
         borderPaint.setShadowLayer(5f, 0f, 0f, borderColor);
         borderPaint.setAntiAlias(true);
 
@@ -196,7 +191,7 @@ public class SpeedometerView extends View {
     }
 
     /**
-     * method handle view destroy
+     * method handle view destroy when detached from window
      */
     @Override
     protected void onDetachedFromWindow() {
@@ -204,9 +199,6 @@ public class SpeedometerView extends View {
         handler.removeMessages(MSG_INVALIDATE);
     }
 
-    /**
-     * increase state of view
-     */
     public void acceleratorPressed() {
         accelerating = true;
         if (!braking) {
@@ -244,7 +236,7 @@ public class SpeedometerView extends View {
     }
 
     /**
-     * Method handle view state & draw all elements
+     * Handle view state & draw all elements
      *
      * @param canvas 0f drawing view element
      */
