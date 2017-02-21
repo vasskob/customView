@@ -300,6 +300,7 @@ public class SpeedometerView extends View {
         canvas.restore();
     }
 
+    // TODO: 21.02.17 draw short lines like on image and use matrix to translate and rotate them to appropriate location
     private void drawBorder(Canvas canvas) {
         borderPaint.setStrokeWidth(oval.width() / 90);
         RectF ovalScale = getOval(canvas, 0.95f);
@@ -315,6 +316,7 @@ public class SpeedometerView extends View {
 
     }
 
+    // TODO: 21.02.17 write complex arrow like on image, use matrix to translate and rotate
     private void drawPointer(Canvas canvas) {
 
         pointerPaint.setStrokeWidth(oval.width() / 65f);
