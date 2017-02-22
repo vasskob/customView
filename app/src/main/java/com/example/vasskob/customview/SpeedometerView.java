@@ -14,7 +14,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import java.util.Locale;
@@ -44,10 +43,23 @@ public class SpeedometerView extends View {
     private static final int DEFAULT_OUTER_SECTOR_RADIUS = 40;
     private static final int DEFAULT_MAX_SPEED = 100;
     private static final float MAX_FUEL_LEVEL = 100;
+    private static final float SPEED_ARROW_WIDTH = 65f;
+    private static final float BORDER_WIDTH = 90;
+    private static final int ROTATION_COEFFICIENT = 400;
+    private static final float DIGITS_VERTICAL_OFFSET = -10;
+    private static final float FUEL_ARROW_WIDTH = 80;
+    private static final float FUEL_ARROW_RADIUS = 10;
+    private static final float MAX_FUEL_ARROW_ANGLE = 60;
+    private static final float FUEL_ARROW_START_ANGLE = 30;
+    private static final float FUEL_ICON_WIDTH = 0.1f;
+    private static final long BLINKING_TIME = 500;
+    private static final float WARNING_FUEL_LEVEL = 30;
 
     private static boolean braking = false;
     private static boolean accelerating = false;
-    private boolean blincking;
+    private boolean blinking;
+    private boolean noFuel;
+
 
     private int viewBackgroundColor;
     private int digitsColor;
@@ -79,12 +91,13 @@ public class SpeedometerView extends View {
     private float incCoefficient = 0;
     private float currentFuelLevel = 100;
     private float fuelConsumption = 0.5f;
+    private long lastTrueTime;
 
     private Path borderPath;
     private RectF oval;
     private OnSpeedChangedListener mOnSpeedChangedListener;
 
-    public Handler handler = new Handler() {
+    private final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -97,7 +110,6 @@ public class SpeedometerView extends View {
             }
         }
     };
-    private long lastTrueTime;
 
 
     public SpeedometerView(Context context) {
@@ -113,7 +125,6 @@ public class SpeedometerView extends View {
         sectorAfterSpeedArrowColor = ContextCompat.getColor(context, R.color.cyan_500);
         speedArrowColor = ContextCompat.getColor(context, R.color.black);
         borderColor = ContextCompat.getColor(context, R.color.gray_900);
-        // mOnSpeedChangedListener = speedChangeListener;
         init();
     }
 
@@ -244,20 +255,10 @@ public class SpeedometerView extends View {
 
     public void acceleratorPressed() {
         accelerating = true;
-        if (!braking) {
+        if (!braking && !noFuel) {
             incCoefficient = 8 * MIN_INC_VALUE;
         }
         startInvalidateAnimation();
-//        long now = System.currentTimeMillis();
-//        if (currentFuelLevel < 30) {
-//            lastTrueTime = now;
-//            blincking = true;
-//        }
-//
-//        if (lastTrueTime + 1000 < now) {
-//            blincking = false;
-//        }
-//        Log.d(TAG, "acceleratorPressed: " + blincking);
     }
 
 
@@ -342,23 +343,27 @@ public class SpeedometerView extends View {
                 0, 0, 0, 0, 175,
                 0, 0, 0, 0, 80,
                 0, 0, 0, 1, 0};
-        float[] cmDefault = new float[]{
-                1, 0, 0, 0, 0,
-                0, 1, 0, 0, 0,
-                0, 0, 1, 0, 0,
-                0, 0, 0, 1, 0};
 
-        if (currentFuelLevel < 30) {
+        if (currentFuelLevel < WARNING_FUEL_LEVEL) {
             ColorMatrixColorFilter colorMatrixFilterRed = new ColorMatrixColorFilter(new ColorMatrix(cmRed));
-            ColorMatrixColorFilter colorMatrixFilterDefault = new ColorMatrixColorFilter(new ColorMatrix(cmDefault));
-            fuelArrowPaint.setColorFilter(colorMatrixFilterRed);
-            maskPaint.setColorFilter(colorMatrixFilterRed);
+            long now = System.currentTimeMillis();
+            if (blinking) {
+                maskPaint.setColorFilter(null);
+                fuelArrowPaint.setColorFilter(null);
+                lastTrueTime = now;
+                blinking = false;
+            } else {
+                maskPaint.setColorFilter(colorMatrixFilterRed);
+                fuelArrowPaint.setColorFilter(colorMatrixFilterRed);
+                if (lastTrueTime + BLINKING_TIME < now) {
+                    blinking = true;
+                }
 
-//            if (blincking) {
-//                maskPaint.setColorFilter(colorMatrixFilterDefault);
-//            } else {
-//                maskPaint.setColorFilter(colorMatrixFilterRed);
-//            }
+//                if (currentFuelLevel==0) {
+//                    acceleratorReleased();
+//                    noFuel=true;
+//                }
+            }
         } else {
             ColorMatrixColorFilter colorMatrixFilterGreen = new ColorMatrixColorFilter(new ColorMatrix(cmGreen));
             fuelArrowPaint.setColorFilter(colorMatrixFilterGreen);
@@ -378,7 +383,7 @@ public class SpeedometerView extends View {
 
     private void drawBorder(Canvas canvas) {
         borderPaint.setColor(borderColor);
-        borderPaint.setStrokeWidth(oval.width() / 90);
+        borderPaint.setStrokeWidth(oval.width() / BORDER_WIDTH);
         RectF ovalScale = getOval(canvas, 0.95f);
         RectF ovalBorder = getOval(canvas, 0.99f);
         borderPath.reset();
@@ -395,7 +400,7 @@ public class SpeedometerView extends View {
     private void drawDigits(Canvas canvas) {
         digitsPaint.setColor(digitsColor);
         canvas.save(Canvas.MATRIX_SAVE_FLAG);
-        canvas.rotate(-(HALF_CIRCLE_DEGREES + 400 / maxSpeed), centerX, centerY);
+        canvas.rotate(-(HALF_CIRCLE_DEGREES + ROTATION_COEFFICIENT / maxSpeed), centerX, centerY);
         digitsPaint.setColor(digitsColor);
         Path circle = new Path();
         double halfCircumference = (oval.width() / 2 - oval.width() / 8) * MATH_PI;
@@ -406,7 +411,7 @@ public class SpeedometerView extends View {
             canvas.drawTextOnPath(String.format(Locale.getDefault(), "%d", i),
                     circle,
                     (float) (i * halfCircumference / maxSpeed),
-                    -10f,
+                    DIGITS_VERTICAL_OFFSET,
                     digitsPaint);
         }
         canvas.restore();
@@ -427,25 +432,25 @@ public class SpeedometerView extends View {
     }
 
     private void drawFuelState(Canvas canvas) {
-        fuelArrowPaint.setStrokeWidth(oval.width() / 80f);
-        float fuelArrowX = centerX - oval.width() / 8;
-        float fuelArrowY = centerY - oval.width() / 3;
-        float fuelAngle = currentFuelLevel / MAX_FUEL_LEVEL * 60;
-        float radius = oval.width() / 10;
+        fuelArrowPaint.setStrokeWidth(oval.width() / FUEL_ARROW_WIDTH);
+        float fuelIconX = centerX - oval.width() / 8;
+        float fuelIconY = centerY - oval.width() / 3;
+        float fuelArrowAngle = currentFuelLevel / MAX_FUEL_LEVEL * MAX_FUEL_ARROW_ANGLE;
+        float fuelArrowRadius = oval.width() / FUEL_ARROW_RADIUS;
         canvas.drawLine(
-                fuelArrowX + 120, fuelArrowY + 60,
-                (float) (fuelArrowX + 120 + radius * Math.cos(Math.toRadians(30 - fuelAngle))),
-                (float) (fuelArrowY + 60 + radius * Math.sin(Math.toRadians(30 - fuelAngle))),
+                fuelIconX + oval.width() / 11, fuelIconY + oval.width() / 22,
+                (float) (fuelIconX + oval.width() / 11 + fuelArrowRadius * Math.cos(Math.toRadians(FUEL_ARROW_START_ANGLE - fuelArrowAngle))),
+                (float) (fuelIconY + oval.width() / 22 + fuelArrowRadius * Math.sin(Math.toRadians(FUEL_ARROW_START_ANGLE - fuelArrowAngle))),
                 fuelArrowPaint
         );
-        Bitmap mask = Bitmap.createScaledBitmap(mMask, (int) (oval.width() * 0.1), (int) (oval.height() * 0.1), true);
-        canvas.drawBitmap(mask, fuelArrowX, fuelArrowY, maskPaint);
+        Bitmap mask = Bitmap.createScaledBitmap(mMask, (int) (oval.width() * FUEL_ICON_WIDTH), (int) (oval.height() * FUEL_ICON_WIDTH), true);
+        canvas.drawBitmap(mask, fuelIconX, fuelIconY, maskPaint);
     }
 
     private void drawSpeedArrow(Canvas canvas) {
         speedArrowPaint.setColor(speedArrowColor);
-        speedArrowPaint.setStrokeWidth(oval.width() / 65f);
-        float radius = speedArrowRadius * oval.width() / (2f * MAX_VALUE_OF_RADIUS);
+        speedArrowPaint.setStrokeWidth(oval.width() / SPEED_ARROW_WIDTH);
+        float radius = speedArrowRadius * oval.width() / (2 * MAX_VALUE_OF_RADIUS);
         RectF smallOval = getOval(canvas, 0.1f);
         angle = currentSpeed / maxSpeed * HALF_CIRCLE_DEGREES;
         canvas.drawLine(
@@ -606,7 +611,7 @@ public class SpeedometerView extends View {
         }
     }
 
-    private void setFuelConsumption(float fuelConsumption) {
+    public void setFuelConsumption(float fuelConsumption) {
         if (fuelConsumption > 0) {
             this.fuelConsumption = fuelConsumption;
         } else {
