@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements View.OnTouchListener{
+public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
 
     private SpeedometerView speedometerView,
             speedometerView2;
@@ -23,18 +23,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     @Override
     protected void onStart() {
         super.onStart();
-
-        speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
-        speedometerView2 = (SpeedometerView) findViewById(R.id.speedometer_view2);
         textView = (TextView) findViewById(R.id.speed_txt);
+        speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
 
-        speedometerView2.setOnSpeedChangedListener(new SpeedometerView.OnSpeedChangedListener() {
-            @Override
-            public void onSpeedChanged(int value) {
-                textView.setText(String.valueOf(value));
-            }
-        });
-
+        speedometerView2 = (SpeedometerView) findViewById(R.id.speedometer_view2);
         speedometerView2.setBorderColor(getResources().getColor(R.color.gray_900));
         speedometerView2.setDigitsColor(getResources().getColor(R.color.gray_900));
         speedometerView2.setSpeedArrowColor(getResources().getColor(R.color.black));
@@ -42,13 +34,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         speedometerView2.setSectorAfterSpeedArrowColor(getResources().getColor(R.color.lightBlue_900));
         speedometerView2.setSectorBeforeSpeedArrowColor(getResources().getColor(R.color.cyan_500));
         speedometerView2.setMaxSpeed(180);
-
-
         speedometerView2.setCurrentSpeed(50);
         speedometerView2.setSpeedArrowRadius(75);
         speedometerView2.setInnerSectorRadius(20);
         speedometerView2.setOuterSectorRadius(35);
-
+        speedometerView2.setCurrentFuelLevel(80);
+        speedometerView2.setOnSpeedChangedListener(new SpeedometerView.OnSpeedChangedListener() {
+            @Override
+            public void onSpeedChanged(int value) {
+                textView.setText(String.valueOf(value));
+            }
+        });
 
         ImageButton accelerateButton = (ImageButton) findViewById(R.id.button_accelerate);
         accelerateButton.setOnTouchListener(this);
@@ -65,13 +61,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     case MotionEvent.ACTION_DOWN:
                         speedometerView.acceleratorPressed();
                         speedometerView2.acceleratorPressed();
-//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         speedometerView.acceleratorReleased();
                         speedometerView2.acceleratorReleased();
-//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                 }
                 break;
@@ -80,13 +74,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     case MotionEvent.ACTION_DOWN:
                         speedometerView.brakePressed();
                         speedometerView2.brakePressed();
-//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         speedometerView.brakeReleased();
                         speedometerView2.brakeReleased();
-//                        onSpeedChanged((int) speedometerView2.getCurrentSpeed());
                         break;
                 }
                 break;
