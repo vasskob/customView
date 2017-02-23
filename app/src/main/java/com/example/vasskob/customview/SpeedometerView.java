@@ -5,8 +5,10 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -31,35 +33,36 @@ public class SpeedometerView extends View {
     private static final int MAX_VALUE_OF_RADIUS = 100;
     private static final int HALF_CIRCLE_DEGREES = 180;
     private static final int MAX_VALUE_OF_MAX_SPEED = 400;
+    private static final float FUEL_ICON_WIDTH = 0.1f;
     private static final float SCALE_WIDTH = 1.5f;
-    private static final float DIGITS_WIDTH = 2f;
-    private static final float SCALE_SIZE = 5f;
+    private static final float DIGITS_WIDTH = 2;
+    private static final float SCALE_SIZE = 5;
+    private static final float SPEED_ARROW_WIDTH = 65;
+    private static final float FUEL_ARROW_WIDTH = 80;
+    private static final float BORDER_WIDTH = 90;
     private static final int MSG_INVALIDATE = 0;
     private static final long INVALIDATE_DELAY = 1000 / 24;
-    private static final String TAG = SpeedometerView.class.getSimpleName();
+
     private static final float MIN_INC_VALUE = 0.08f;
     private static final int DEFAULT_SPEED_ARROW_RADIUS = 50;
     private static final int DEFAULT_INNER_SECTOR_RADIUS = 30;
     private static final int DEFAULT_OUTER_SECTOR_RADIUS = 40;
     private static final int DEFAULT_MAX_SPEED = 100;
     private static final float MAX_FUEL_LEVEL = 100;
-    private static final float SPEED_ARROW_WIDTH = 65f;
-    private static final float BORDER_WIDTH = 90;
     private static final int ROTATION_COEFFICIENT = 400;
     private static final float DIGITS_VERTICAL_OFFSET = -10;
-    private static final float FUEL_ARROW_WIDTH = 80;
+
     private static final float FUEL_ARROW_RADIUS = 10;
     private static final float MAX_FUEL_ARROW_ANGLE = 60;
     private static final float FUEL_ARROW_START_ANGLE = 30;
-    private static final float FUEL_ICON_WIDTH = 0.1f;
+
     private static final long BLINKING_TIME = 500;
     private static final float WARNING_FUEL_LEVEL = 30;
-
+    //  private static final String TAG = SpeedometerView.class.getSimpleName();
     private static boolean braking = false;
     private static boolean accelerating = false;
     private boolean blinking;
-    private boolean noFuel;
-
+    private boolean noFuel = false;
 
     private int viewBackgroundColor;
     private int digitsColor;
@@ -75,6 +78,7 @@ public class SpeedometerView extends View {
 
     private Paint speedArrowPaint;
     private Paint borderPaint;
+    private Paint scalePaint;
     private Paint backgroundPaint;
     private Paint digitsPaint;
     private Paint sectorBeforeSpeedArrowPaint;
@@ -94,8 +98,13 @@ public class SpeedometerView extends View {
     private long lastTrueTime;
 
     private Path borderPath;
+    private Path path;
+    private Matrix matrix;
+    private float[] src;
+    private float[] dst;
     private RectF oval;
     private OnSpeedChangedListener mOnSpeedChangedListener;
+
 
     private final Handler handler = new Handler() {
         @Override
@@ -171,6 +180,9 @@ public class SpeedometerView extends View {
         borderPaint.setShadowLayer(5f, 0f, 0f, borderColor);
         borderPaint.setAntiAlias(true);
 
+        scalePaint = new Paint();
+        scalePaint.setColor(Color.CYAN);
+
         backgroundPaint = new Paint();
         backgroundPaint.setColor(viewBackgroundColor);
         backgroundPaint.setStyle(Paint.Style.FILL_AND_STROKE);
@@ -191,6 +203,8 @@ public class SpeedometerView extends View {
         sectorAfterSpeedArrowPaint.setStyle(Paint.Style.STROKE);
 
         borderPath = new Path();
+        path = new Path();
+        matrix = new Matrix();
 
         mMask = BitmapFactory.decodeResource(getResources(), R.drawable.ic_oil);
         mMask = Bitmap.createBitmap(mMask, 0, 0, mMask.getWidth(), mMask.getHeight());
@@ -298,11 +312,11 @@ public class SpeedometerView extends View {
         updateCurrentFuelLevel();
         drawBackground(canvas);
         drawBorder(canvas);
-        drawDigits(canvas);
-        drawSectorAfterSpeedArrow(canvas);
-        drawSectorBeforeSpeedArrow(canvas);
-        drawFuelState(canvas);
-        drawSpeedArrow(canvas);
+//        drawDigits(canvas);
+//        drawSectorAfterSpeedArrow(canvas);
+//        drawSectorBeforeSpeedArrow(canvas);
+//        drawFuelState(canvas);
+//        drawSpeedArrow(canvas);
 
     }
 
@@ -386,16 +400,39 @@ public class SpeedometerView extends View {
         borderPaint.setStrokeWidth(oval.width() / BORDER_WIDTH);
         RectF ovalScale = getOval(canvas, 0.95f);
         RectF ovalBorder = getOval(canvas, 0.99f);
-        borderPath.reset();
-        int step = HALF_CIRCLE_DEGREES * MAX_SPEED_DIVISIBLE_BY / maxSpeed;
-        for (int i = -HALF_CIRCLE_DEGREES + step; i < 0; i += step) {
-
-            borderPath.addArc(ovalScale, i, SCALE_WIDTH);
-        }
         canvas.drawArc(ovalBorder, -HALF_CIRCLE_DEGREES, HALF_CIRCLE_DEGREES, false, borderPaint);
-        canvas.drawPath(borderPath, borderPaint);
+
+
+        int step = HALF_CIRCLE_DEGREES * MAX_SPEED_DIVISIBLE_BY / maxSpeed;
+//        for (int i = -HALF_CIRCLE_DEGREES + step; i < 0; i += step) {
+//            borderPath.addArc(ovalScale, i, SCALE_WIDTH);
+//        }
+//        canvas.drawPath(borderPath, borderPaint);
+
+        borderPath.reset();
+        borderPath.addRect(0, 0, 20, 40, Path.Direction.CW);
+        scalePaint.setColor(Color.CYAN);
+        canvas.drawPath(borderPath, scalePaint);
+
+        for (int i = 0; i < maxSpeed; i += step) {
+            matrix.reset();
+            matrix.setTranslate(
+                    (float) (centerX + (oval.width() / 2 - 20) * Math.cos(Math.toRadians(180 - i))-10),
+                    (float) (centerY + (oval.width() / 2 - 20) * Math.cos(Math.toRadians(180 - i))));
+            matrix.setRotate(-i,
+                    (float) (centerX + (oval.width() / 2 - 20) * Math.cos(Math.toRadians(180 - i))-10),
+                    (float) (centerY + (oval.width() / 2 - 20) * Math.cos(Math.toRadians(180 - i))));
+//                    (float) (centerX + oval.width() / 2 * Math.cos(Math.toRadians(180-i))),
+//                    (float) (centerY + oval.width() / 2 * Math.cos(Math.toRadians(i))));
+            // matrix.setSinCos((float) (Math.toRadians(180 - i)), (float) (Math.toRadians(180-i)));
+
+            borderPath.transform(matrix);
+            scalePaint.setColor(Color.GREEN);
+            canvas.drawPath(borderPath, scalePaint);
+        }
 
     }
+
 
     private void drawDigits(Canvas canvas) {
         digitsPaint.setColor(digitsColor);
@@ -624,3 +661,26 @@ public class SpeedometerView extends View {
     }
 
 }
+
+//        src = new float[]{100, 100, 100, 120};
+//        dst = new float[]{
+//                (float) (centerX + oval.width() / 11 + oval.width()/2 * Math.cos(Math.toRadians(-180 - angle))),
+//                (float) (centerY + oval.width() / 22 + oval.width()/2 * Math.sin(Math.toRadians(-180 - angle))),
+//                (float) (centerX + oval.width() / 11 + oval.width()/2 * Math.cos(Math.toRadians(-180 - angle))),
+//                (float) (centerY + oval.width() / 22 + oval.width()/2 * Math.sin(Math.toRadians(-180 - angle))),
+//        };
+//        for (int i = 0; i < maxSpeed; i += step) {
+//            dst = new float[]{100+step, 100+step, 200-step, 200-step};
+//            matrix.setPolyToPoly(src, 0, dst, 0, 1);
+//            canvas.drawLine(
+//                    dst[0]+i*2 ,
+//                    //+ (float) (oval.width() / 2 * Math.cos(Math.toRadians( i))),
+//                    dst[1]+i,
+//                    //+ (float) (oval.width() / 2 * Math.sin(Math.toRadians( i))),
+//                    dst[2]+i*2,
+//                    //+ (float) (oval.width() / 2 * Math.cos(Math.toRadians( i))),
+//                    dst[3]+i,
+//                    //+ (float) (oval.width() / 2 * Math.cos(Math.toRadians( i))),
+//                    borderPaint);
+//
+//        }
