@@ -26,7 +26,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         super.onStart();
         textView = (TextView) findViewById(R.id.speed_txt);
         speedometerView = (SpeedometerView) findViewById(R.id.speedometer_view);
-
+        speedometerView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                speedometerView.setCurrentFuelLevel(100);
+            }
+        });
         speedometerView2 = (SpeedometerView) findViewById(R.id.speedometer_view2);
         speedometerView2.setBorderColor(ContextCompat.getColor(this, R.color.gray_900));
         speedometerView2.setDigitsColor(ContextCompat.getColor(this, R.color.gray_900));
@@ -36,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         speedometerView2.setSectorBeforeSpeedArrowColor(ContextCompat.getColor(this, R.color.cyan_500));
         speedometerView2.setMaxSpeed(160);
         speedometerView2.setCurrentSpeed(50);
-        speedometerView2.setSpeedArrowRadius(75);
+        speedometerView2.setSpeedArrowRadius(70);
         speedometerView2.setInnerSectorRadius(20);
         speedometerView2.setOuterSectorRadius(35);
         speedometerView2.setCurrentFuelLevel(80);
@@ -45,6 +50,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public void onSpeedChanged(int value) {
                 textView.setText(String.valueOf(value));
+            }
+        });
+        speedometerView2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                speedometerView2.setCurrentFuelLevel(100);
             }
         });
 
