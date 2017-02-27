@@ -16,5 +16,7 @@
     <color name="lightBlue_300">#4FC3F7</color>
     <color name="lightBlue_800">#0277BD</color>
     <color name="lightBlue_900">#01579B</color>
+    <color name="green_500">#4CAF50</color>
+
 
 </resources>
