@@ -289,6 +289,7 @@ public class SpeedometerView extends View {
             incCoefficient = 8 * MIN_INC_VALUE;
         }
         startInvalidateAnimation();
+        startFuelAnimation();
     }
 
 
@@ -365,21 +366,16 @@ public class SpeedometerView extends View {
     private void updateFuelIconColor() {
         int pixelX;
 
-        if (currentFuelLevel * gradientMask.getWidth() / 100 <= 0)
-            pixelX = 1;
-        else if (currentFuelLevel * gradientMask.getWidth() / 100 >= gradientMask.getWidth()) {
-            pixelX = gradientMask.getWidth() - 1;
-        } else {
-            pixelX = (int) (currentFuelLevel * gradientMask.getWidth() / 100);
-        }
 
-        final float[] cmDefault = new float[]{
-                0, 0, 0, 0, Color.red(gradientMask.getPixel(pixelX, 10)),
-                0, 0, 0, 0, Color.green(gradientMask.getPixel(pixelX, 10)),
-                0, 0, 0, 0, Color.blue(gradientMask.getPixel(pixelX, 10)),
-                0, 0, 0, 1, 0};
+//        final float[] cmDefault = new float[]{
+//                0, 0, 0, 0, Color.red(gradientMask.getPixel(pixelX, 10)),
+//                0, 0, 0, 0, Color.green(gradientMask.getPixel(pixelX, 10)),
+//                0, 0, 0, 0, Color.blue(gradientMask.getPixel(pixelX, 10)),
+//                0, 0, 0, 1, 0};
 
-        ColorMatrixColorFilter colorMatrixFilter = new ColorMatrixColorFilter(new ColorMatrix(cmDefault));
+
+
+       // ColorMatrixColorFilter colorMatrixFilter = new ColorMatrixColorFilter(new ColorMatrix(cmDefault));
         if (currentFuelLevel < WARNING_FUEL_LEVEL) {
 
             long now = System.currentTimeMillis();
@@ -393,8 +389,8 @@ public class SpeedometerView extends View {
             } else {
                 fuelIconPaint.setAlpha(255);
                 fuelArrowPaint.setAlpha(255);
-                fuelIconPaint.setColorFilter(colorMatrixFilter);
-                fuelArrowPaint.setColorFilter(colorMatrixFilter);
+//                fuelIconPaint.setColorFilter(colorMatrixFilter);
+//                fuelArrowPaint.setColorFilter(colorMatrixFilter);
 
                 if (lastTrueTime + BLINKING_TIME < now) {
                     blinking = true;
@@ -405,15 +401,49 @@ public class SpeedometerView extends View {
 //                    noFuel=true;
 //                }
             }
-        } else {
-
-            fuelIconPaint.setColorFilter(colorMatrixFilter);
-            fuelArrowPaint.setColorFilter(colorMatrixFilter);
-
         }
+//        else {
+//
+//            fuelIconPaint.setColorFilter(colorMatrixFilter);
+//            fuelArrowPaint.setColorFilter(colorMatrixFilter);
+//
+//        }
 
     }
 
+    private void startFuelAnimation() {
+
+        int colorFrom = ContextCompat.getColor(getContext(), R.color.green_500);
+        int colorTo = ContextCompat.getColor(getContext(), R.color.red_700);
+
+//
+        ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
+        colorAnimation.setDuration(10000); // milliseconds
+        colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                updateFuelColor((int) animator.getAnimatedValue());
+            }
+        });
+        colorAnimation.start();
+
+    }
+
+    private void updateFuelColor(int color) {
+        float r = Color.red(color) ;
+        float g = Color.green(color) ;
+        float b = Color.blue(color) ;
+        Log.d(TAG, "updateFuelColor: r: " + r + " g: " +g + " b: " + b);
+        final float[] cmDefault = new float[]{
+                0, 0, 0, 0, r,
+                0, 0, 0, 0, g,
+                0, 0, 0, 0, b,
+                0, 0, 0, 1, 0};
+        ColorMatrixColorFilter colorMatrixFilter = new ColorMatrixColorFilter(new ColorMatrix(cmDefault));
+        fuelArrowPaint.setColorFilter(colorMatrixFilter);
+        fuelIconPaint.setColorFilter(colorMatrixFilter);
+    }
 
     private void drawBackground(Canvas canvas) {
         backgroundPaint.setColor(viewBackgroundColor);
