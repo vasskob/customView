@@ -8,15 +8,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Message;
@@ -24,6 +21,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
 
 import java.util.Locale;
 
@@ -41,7 +39,7 @@ public class SpeedometerView extends View {
     private static final int HALF_CIRCLE_DEGREES = 180;
     private static final int MAX_VALUE_OF_MAX_SPEED = 400;
     private static final float FUEL_ICON_WIDTH = 0.1f;
-    //  private static final float SCALE_WIDTH = 1.5f;
+
     private static final float DIGITS_WIDTH = 2;
     private static final float SCALE_SIZE = 5;
     private static final float SPEED_ARROW_WIDTH = 65;
@@ -61,15 +59,14 @@ public class SpeedometerView extends View {
 
     private static final float FUEL_ARROW_RADIUS = 10;
     private static final float MAX_FUEL_ARROW_ANGLE = 60;
-    private static final float FUEL_ARROW_START_ANGLE = 30;
+    private static final float FUEL_ARROW_START_ANGLE = 25;
 
-    private static final long BLINKING_TIME = 1000;
+    private static final long BLINKING_TIME = 500;
     private static final float WARNING_FUEL_LEVEL = 30;
     private static final String TAG = SpeedometerView.class.getSimpleName();
+    private static final long SECONDS_TO_MILLISECONDS = 100;
     private static boolean braking = false;
     private static boolean accelerating = false;
-    private boolean blinking;
-    private boolean noFuel = false;
 
     private int viewBackgroundColor;
     private int digitsColor;
@@ -90,8 +87,8 @@ public class SpeedometerView extends View {
     private Paint digitsPaint;
     private Paint sectorBeforeSpeedArrowPaint;
     private Paint sectorAfterSpeedArrowPaint;
-    private Bitmap mMask;
-    private Bitmap gradientMask;
+    private Bitmap fuelIconMask;
+
     private Paint fuelIconPaint;
     private Paint fuelArrowPaint;
 
@@ -103,13 +100,12 @@ public class SpeedometerView extends View {
     private float incCoefficient = 0;
     private float currentFuelLevel = 100;
     private float fuelConsumption = 0.5f;
-    private long lastTrueTime;
+
 
     private Path fuelArrowPath;
     private Path borderPath;
     private Path speedArrowPath;
     private Matrix matrix;
-    private Matrix matrix2;
     private RectF oval;
     private OnSpeedChangedListener mOnSpeedChangedListener;
 
@@ -127,6 +123,8 @@ public class SpeedometerView extends View {
             }
         }
     };
+    private ValueAnimator colorAnimation;
+    private ValueAnimator blinkAnimator;
 
 
     public SpeedometerView(Context context) {
@@ -162,7 +160,7 @@ public class SpeedometerView extends View {
             currentSpeed = a.getFloat(R.styleable.SpeedometerView_currentSpeed, 0);
             setCurrentSpeed(currentSpeed);
             if (currentSpeed > 0)
-                acceleratorReleased();
+                brakeReleased();
             viewBackgroundColor = a.getColor(R.styleable.SpeedometerView_backgroundColor, 0);
 
             digitsColor = a.getColor(R.styleable.SpeedometerView_digitsColor, 0);
@@ -216,19 +214,16 @@ public class SpeedometerView extends View {
         fuelArrowPath = new Path();
         matrix = new Matrix();
 
-        mMask = BitmapFactory.decodeResource(getResources(), R.drawable.ic_oil);
-        mMask = Bitmap.createBitmap(mMask, 0, 0, mMask.getWidth(), mMask.getHeight());
-
-        gradientMask = BitmapFactory.decodeResource(getResources(), R.drawable.gradient);
-        gradientMask = Bitmap.createBitmap(gradientMask, 0, 0, gradientMask.getWidth(), gradientMask.getHeight());
+        fuelIconMask = BitmapFactory.decodeResource(getResources(), R.drawable.ic_oil);
+        fuelIconMask = Bitmap.createBitmap(fuelIconMask, 0, 0, fuelIconMask.getWidth(), fuelIconMask.getHeight());
 
         fuelIconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        fuelIconPaint.setAlpha(255);
-
 
         fuelArrowPaint = new Paint();
         fuelArrowPaint.setStyle(Paint.Style.FILL_AND_STROKE);
-        fuelArrowPaint.setAlpha(255);
+
+        startFuelColorAnimation();
+        colorAnimation.pause();
     }
 
     @Override
@@ -263,13 +258,12 @@ public class SpeedometerView extends View {
             width = 0;
             height = 0;
         }
-        //      Log.d(TAG, "onMeasure: width: " + width + " height: " + height);
+        Log.d(TAG, "onMeasure: width: " + width + " height: " + height);
         setMeasuredDimension(width, height);
     }
 
 
     private void startInvalidateAnimation() {
-//      Log.d(TAG, "startInvalidateAnimation: ");
         handler.removeMessages(MSG_INVALIDATE);
         handler.sendEmptyMessage(MSG_INVALIDATE);
     }
@@ -285,11 +279,11 @@ public class SpeedometerView extends View {
 
     public void acceleratorPressed() {
         accelerating = true;
-        if (!braking && !noFuel) {
+        if (!braking) {
             incCoefficient = 8 * MIN_INC_VALUE;
         }
         startInvalidateAnimation();
-        startFuelAnimation();
+        startFuelColorAnimation();
     }
 
 
@@ -299,6 +293,7 @@ public class SpeedometerView extends View {
             incCoefficient = -1 * MIN_INC_VALUE;
         }
         startInvalidateAnimation();
+        colorAnimation.pause();
     }
 
     public void brakePressed() {
@@ -332,7 +327,7 @@ public class SpeedometerView extends View {
         drawDigits(canvas);
         drawSectorAfterSpeedArrow(canvas);
         drawSectorBeforeSpeedArrow(canvas);
-        drawFuelState(canvas);
+        drawFuelIcon(canvas);
         drawSpeedArrow(canvas);
 
     }
@@ -360,81 +355,58 @@ public class SpeedometerView extends View {
         } else if (accelerating) {
             currentFuelLevel -= MAX_FUEL_LEVEL / 100 * fuelConsumption;
         }
-        updateFuelIconColor();
-    }
-
-    private void updateFuelIconColor() {
-        int pixelX;
-
-
-//        final float[] cmDefault = new float[]{
-//                0, 0, 0, 0, Color.red(gradientMask.getPixel(pixelX, 10)),
-//                0, 0, 0, 0, Color.green(gradientMask.getPixel(pixelX, 10)),
-//                0, 0, 0, 0, Color.blue(gradientMask.getPixel(pixelX, 10)),
-//                0, 0, 0, 1, 0};
-
-
-
-       // ColorMatrixColorFilter colorMatrixFilter = new ColorMatrixColorFilter(new ColorMatrix(cmDefault));
         if (currentFuelLevel < WARNING_FUEL_LEVEL) {
-
-            long now = System.currentTimeMillis();
-            if (blinking) {
-
-                fuelArrowPaint.setAlpha(0);
-                fuelIconPaint.setAlpha(0);
-
-                lastTrueTime = now;
-                blinking = false;
-            } else {
-                fuelIconPaint.setAlpha(255);
-                fuelArrowPaint.setAlpha(255);
-//                fuelIconPaint.setColorFilter(colorMatrixFilter);
-//                fuelArrowPaint.setColorFilter(colorMatrixFilter);
-
-                if (lastTrueTime + BLINKING_TIME < now) {
-                    blinking = true;
-                }
-
-//                if (currentFuelLevel==0) {
-//                    acceleratorReleased();
-//                    noFuel=true;
-//                }
-            }
+            startFuelBlinkingAnimation();
+        } else if (blinkAnimator != null) {
+            blinkAnimator.pause();
         }
-//        else {
-//
-//            fuelIconPaint.setColorFilter(colorMatrixFilter);
-//            fuelArrowPaint.setColorFilter(colorMatrixFilter);
-//
-//        }
 
     }
 
-    private void startFuelAnimation() {
+    private void startFuelBlinkingAnimation() {
+
+        if (blinkAnimator == null) {
+            blinkAnimator = ValueAnimator.ofInt(0, 255);
+            blinkAnimator.setDuration(BLINKING_TIME);
+            blinkAnimator.setRepeatCount(Animation.INFINITE);
+            blinkAnimator.setRepeatMode(ValueAnimator.REVERSE);
+            blinkAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animator) {
+                    fuelArrowPaint.setAlpha((int) animator.getAnimatedValue());
+                    fuelIconPaint.setAlpha((int) animator.getAnimatedValue());
+                }
+            });
+            blinkAnimator.start();
+        } else {
+            blinkAnimator.resume();
+        }
+    }
+
+    private void startFuelColorAnimation() {
 
         int colorFrom = ContextCompat.getColor(getContext(), R.color.green_500);
         int colorTo = ContextCompat.getColor(getContext(), R.color.red_700);
-
-//
-        ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-        colorAnimation.setDuration(10000); // milliseconds
-        colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-
-            @Override
-            public void onAnimationUpdate(ValueAnimator animator) {
-                updateFuelColor((int) animator.getAnimatedValue());
-            }
-        });
-        colorAnimation.start();
+        if (colorAnimation == null || currentFuelLevel == MAX_FUEL_LEVEL) {
+            colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
+            colorAnimation.setDuration((long) (MAX_FUEL_LEVEL / 2f * fuelConsumption * SECONDS_TO_MILLISECONDS)); // milliseconds
+            colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animator) {
+                    updateFuelColor((int) animator.getAnimatedValue());
+                }
+            });
+            colorAnimation.start();
+        } else {
+            colorAnimation.resume();
+        }
 
     }
 
     private void updateFuelColor(int color) {
-        float r = Color.red(color) ;
-        float g = Color.green(color) ;
-        float b = Color.blue(color) ;
-        Log.d(TAG, "updateFuelColor: r: " + r + " g: " +g + " b: " + b);
+        float r = Color.red(color);
+        float g = Color.green(color);
+        float b = Color.blue(color);
         final float[] cmDefault = new float[]{
                 0, 0, 0, 0, r,
                 0, 0, 0, 0, g,
@@ -516,7 +488,7 @@ public class SpeedometerView extends View {
         canvas.drawArc(rect, -HALF_CIRCLE_DEGREES, angle, false, sectorBeforeSpeedArrowPaint);
     }
 
-    private void drawFuelState(Canvas canvas) {
+    private void drawFuelIcon(Canvas canvas) {
         fuelArrowPaint.setStrokeWidth(oval.width() / FUEL_ARROW_WIDTH);
         float fuelIconX = centerX - oval.width() / 8;
         float fuelIconY = centerY - oval.width() / 3;
@@ -540,11 +512,11 @@ public class SpeedometerView extends View {
 
         matrix.reset();
         matrix.setTranslate(fuelIconX + oval.width() / 11 - point1X, fuelIconY + oval.width() / 22 - point1Y);
-        matrix.postRotate(20 - fuelArrowAngle, fuelIconX + oval.width() / 11, fuelIconY + oval.width() / 22);
+        matrix.postRotate(FUEL_ARROW_START_ANGLE - fuelArrowAngle, fuelIconX + oval.width() / 11, fuelIconY + oval.width() / 22);
         fuelArrowPath.transform(matrix);
         canvas.drawPath(fuelArrowPath, fuelArrowPaint);
 
-        Bitmap mask = Bitmap.createScaledBitmap(mMask, (int) (oval.width() * FUEL_ICON_WIDTH), (int) (oval.height() * FUEL_ICON_WIDTH), true);
+        Bitmap mask = Bitmap.createScaledBitmap(fuelIconMask, (int) (oval.width() * FUEL_ICON_WIDTH), (int) (oval.height() * FUEL_ICON_WIDTH), true);
         canvas.drawBitmap(mask, fuelIconX, fuelIconY, fuelIconPaint);
     }
 
@@ -571,7 +543,7 @@ public class SpeedometerView extends View {
 
         matrix.reset();
         matrix.setTranslate(centerX - (2 * point1X + speedArrowTopWidth) / 2, centerY - radius);
-        matrix.postRotate(angle - 90, centerX, centerY);
+        matrix.postRotate(angle - HALF_CIRCLE_DEGREES / 2, centerX, centerY);
         speedArrowPath.transform(matrix);
         canvas.drawPath(speedArrowPath, speedArrowPaint);
         invalidate();
@@ -720,12 +692,19 @@ public class SpeedometerView extends View {
 
     public void setCurrentFuelLevel(float fuelLevel) {
         if (fuelLevel < 0) {
-            this.currentFuelLevel = 0;
+            currentFuelLevel = 0;
         } else if (fuelLevel > MAX_FUEL_LEVEL) {
-            this.currentFuelLevel = MAX_FUEL_LEVEL;
+            currentFuelLevel = MAX_FUEL_LEVEL;
         } else {
-            this.currentFuelLevel = fuelLevel;
+            currentFuelLevel = fuelLevel;
         }
+        colorAnimation.start();
+        colorAnimation.pause();
+        if (currentFuelLevel > WARNING_FUEL_LEVEL && blinkAnimator != null) {
+            blinkAnimator.end();
+            blinkAnimator = null;
+        }
+
     }
 
     public void setFuelConsumption(float fuelConsumption) {
